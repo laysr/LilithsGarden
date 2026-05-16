@@ -1,6 +1,7 @@
 using ProjectM;
 using Stunlock.Core;
 using Unity.Entities;
+using LilithsHeart.Systems;
 
 namespace LilithsHeart;
 
@@ -37,12 +38,16 @@ internal static class Core
     static bool _initialized;
     public static bool IsReady => _initialized;
 
-    internal static void OnInitialize()
-    {
-        if (_initialized) return;
+internal static void OnInitialize()
+{
+    if (_initialized) return;
 
-        LilithsLogger.Info("LilithsHeart core initializing...");
-        _initialized = true;
-        LilithsLogger.Info("LilithsHeart core initialized.");
-    }
+    LilithsLogger.Info("LilithsHeart core initializing...");
+
+    // Added: Initialize name resolver so modules can look up GUIDs by name
+    PrefabNameResolver.Initialize();
+
+    _initialized = true;
+    LilithsLogger.Info("LilithsHeart core initialized.");
+}
 }

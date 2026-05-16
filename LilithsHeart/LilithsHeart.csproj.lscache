@@ -66,6 +66,7 @@ Resources/Prefabs/
  Items.cs
  Recipes.cs
  Stations.cs
+Systems/PrefabNameResolver.cs
 
 [metadataReferences]
 <NUGET>/
