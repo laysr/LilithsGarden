@@ -53,12 +53,16 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 /warnaserror+:NU1605
 
 [sourceFiles]
+Data/RecipeConfig.cs
 obj/Debug/net6.0/
  .NETCoreApp,Version=v6.0.AssemblyAttributes.cs
  LilithsCookbook.AssemblyInfo.cs
  LilithsCookbook.GlobalUsings.g.cs
  MyPluginInfo.cs
 Plugin.cs
+Systems/
+ ConfigLoader.cs
+ RecipeSystem.cs
 
 [metadataReferences]
 ../LilithsHeart/obj/Debug/net6.0/ref/LilithsHeart.dll
