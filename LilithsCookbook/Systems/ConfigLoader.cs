@@ -8,7 +8,6 @@ public static class ConfigLoader
 {
     private static readonly string ConfigPath = Path.Combine(
         BepInEx.Paths.ConfigPath,
-        "LilithsGarden",
         "LilithsCookbook",
         "recipes.json"
     );
