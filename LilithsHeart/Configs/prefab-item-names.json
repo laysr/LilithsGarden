@@ -1,0 +1,18 @@
+{
+    "-1593377811": {
+        "name": "Item_Ingredient_Wood_Standard",
+        "configName": "WoodLog"
+    },
+    "-1017402979": {
+        "name": "Item_Ingredient_Plank",
+        "configName": "Plank"
+    },
+    "-1531666018": {
+        "name": "Item_Ingredient_Stone",
+        "configName": "Stone"
+    },
+    "1788016417": {
+        "name": "Item_Ingredient_StoneBrick",
+        "configName": "StoneBrick"
+    }
+}
