@@ -1,4 +1,5 @@
 using BepInEx.Logging;
+using LilithsHeart.Config;
 
 namespace LilithsHeart;
 
@@ -20,8 +21,12 @@ public static class LilithsLogger
     public static void Error(string source, string message)
         => _logger.LogError($"[{source}] {message}");
 
-    // [CHANGED] Debug guard removed temporarily until HeartConfig is written.
-    //           Will be re-added when HeartConfig is in place.
+    // [CHANGED] Debug guard restored now that HeartConfig is written.
+    //           Zero cost when debug is off — no string allocation or write operations.
+    // [PERFORMANCE] Short-circuits immediately if IsDebug is false.
     public static void Debug(string source, string message)
-        => _logger.LogDebug($"[{source}] {message}");
+    {
+        if (HeartConfig.IsDebug)
+            _logger.LogDebug($"[{source}] {message}");
+    }
 }
