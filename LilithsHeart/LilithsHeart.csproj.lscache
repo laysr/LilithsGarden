@@ -54,6 +54,7 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 
 [sourceFiles]
 Core.cs
+Extensions/EntityExtensions.cs
 LilithsLogger.cs
 obj/Debug/net6.0/
  .NETCoreApp,Version=v6.0.AssemblyAttributes.cs

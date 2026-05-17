@@ -10,16 +10,20 @@ namespace LilithsCookbook;
 [BepInDependency("audaciousbovine.lilithsheart")]
 public class Plugin : BasePlugin
 {
-    public static RecipeConfig? RecipeConfig { get; private set; }
+    // Changed: RecipeData -> CookbookRecipeData
+    public static CookbookRecipeData? RecipeData { get; private set; }
 
     public override void Load()
     {
         LilithsLogger.Info($"{MyPluginInfo.PLUGIN_NAME} v{MyPluginInfo.PLUGIN_VERSION} loaded.");
-        RecipeConfig = ConfigLoader.Load();
+
+        RecipeData = ConfigLoader.Load();
+        Core.OnInitialized += RecipeSystem.ApplyChanges;
     }
 
     public override bool Unload()
     {
+        Core.OnInitialized -= RecipeSystem.ApplyChanges;
         return true;
     }
 }

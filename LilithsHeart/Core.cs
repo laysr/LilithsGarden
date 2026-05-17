@@ -5,7 +5,7 @@ using LilithsHeart.Systems;
 
 namespace LilithsHeart;
 
-internal static class Core
+public static class Core
 {
     static World? _server;
 

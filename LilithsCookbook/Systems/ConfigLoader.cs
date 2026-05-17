@@ -9,32 +9,34 @@ public static class ConfigLoader
     private static readonly string ConfigPath = Path.Combine(
         BepInEx.Paths.ConfigPath,
         "LilithsCookbook",
-        "recipes.json"
+        "recipes-config.json"
     );
 
-    public static RecipeConfig Load()
+    // Changed: RecipeData -> CookbookRecipeData
+    public static CookbookRecipeData Load()
     {
         if (!File.Exists(ConfigPath))
         {
-            LilithsLogger.Warning($"recipes.json not found at {ConfigPath}, using vanilla values.");
-            return new RecipeConfig();
+            LilithsLogger.Warning($"recipes-config.json not found at {ConfigPath}, using vanilla values.");
+            return new CookbookRecipeData();
         }
 
         try
         {
             var json = File.ReadAllText(ConfigPath);
-            var config = JsonSerializer.Deserialize<RecipeConfig>(json, new JsonSerializerOptions
+            // Changed: RecipeData -> CookbookRecipeData
+            var config = JsonSerializer.Deserialize<CookbookRecipeData>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            LilithsLogger.Info($"Loaded recipes.json successfully.");
-            return config ?? new RecipeConfig();
+            LilithsLogger.Info($"Loaded recipes-config.json successfully.");
+            return config ?? new CookbookRecipeData();
         }
         catch (Exception e)
         {
-            LilithsLogger.Error($"Failed to load recipes.json: {e.Message}");
-            return new RecipeConfig();
+            LilithsLogger.Error($"Failed to load recipes-config.json: {e.Message}");
+            return new CookbookRecipeData();
         }
     }
 }

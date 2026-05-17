@@ -1,13 +1,14 @@
 namespace LilithsCookbook.Data;
 
-public class RecipeConfig
+// Changed: RecipeData -> CookbookRecipeData
+public class CookbookRecipeData
 {
     public Dictionary<string, RecipeEntry> Recipes { get; set; } = new();
 }
 
 public class RecipeEntry
 {
-    public bool Enabled { get; set; } = false;
+    public bool ChangesEnabled { get; set; } = false;
     public float? CraftDuration { get; set; }
     public bool? AlwaysUnlocked { get; set; }
     public bool? HideInStation { get; set; }
