@@ -1,14 +1,13 @@
+using LilithsHeart.Systems;
 using ProjectM;
 using Stunlock.Core;
 using Unity.Entities;
-using LilithsHeart.Systems;
 
 namespace LilithsHeart;
 
 public static class Heart
 {
-    // [CHANGED] Renamed from Core to Heart to match suite naming convention
-    private const string LOG_SOURCE = "LilithsHeart";
+    private const string LOG_SOURCE = "LilithsHeart.Heart";
 
     static World? _server;
     static World Server
@@ -44,9 +43,20 @@ public static class Heart
         LilithsLogger.Info(LOG_SOURCE, "Heart initializing...");
 
         PrefabNameResolver.Initialize();
+
         _initialized = true;
 
         LilithsLogger.Info(LOG_SOURCE, "Heart initialized.");
+
+        // [CHANGED] Fire OnWorldReady through the event bus so all
+        //           subscribed modules know ECS is safe to use.
+        HeartEventBus.Publish(new OnWorldReady());
+
+        // Also fire the direct event for any systems that
+        // subscribed before the bus was available.
         OnInitialized?.Invoke();
+
+        // Log the module registry summary now that world is ready.
+        HeartRegistry.LogSummary();
     }
 }

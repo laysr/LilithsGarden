@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using LilithsHeart.Config;
+using LilithsHeart.Systems;
 
 namespace LilithsHeart;
 
@@ -19,10 +20,9 @@ public class HeartPlugin : BasePlugin
         {
             LilithsLogger.Info("LilithsHeart", $"{MyPluginInfo.PLUGIN_NAME} v{MyPluginInfo.PLUGIN_VERSION} loaded.");
 
-            // [CHANGED] HeartConfig restored to initialization sequence.
-            //           Must come before anything that calls LilithsLogger.Debug()
-            //           since the debug guard reads HeartConfig.IsDebug.
             HeartConfig.Initialize(Config);
+            HeartEventBus.Initialize();
+            HeartRegistry.Initialize();
 
             _harmony?.UnpatchSelf();
             _harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
@@ -39,6 +39,8 @@ public class HeartPlugin : BasePlugin
     public override bool Unload()
     {
         _harmony?.UnpatchSelf();
+        HeartEventBus.Shutdown();
+        HeartRegistry.Shutdown();
 
         LilithsLogger.Info("LilithsHeart", "LilithsHeart unloaded.");
         return true;

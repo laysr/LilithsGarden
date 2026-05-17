@@ -1,7 +1,7 @@
 using ProjectM;
 using Unity.Entities;
 
-namespace LilithsHeart.Extensions;
+namespace LilithsHeart.Systems;
 
 public static class EntityExtensions
 {
