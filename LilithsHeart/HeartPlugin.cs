@@ -1,10 +1,6 @@
 using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
-using LilithsHeart.Config;
-using LilithsHeart.Events;
-using LilithsHeart.Registry;
-using LilithsHeart.Resources;
 
 namespace LilithsHeart;
 
@@ -16,21 +12,15 @@ public class HeartPlugin : BasePlugin
 
     public override void Load()
     {
-        // Logger initialized first and outside the try/catch so it is
-        // always available to report any failures that occur after this point.
         LilithsLogger.Initialize(base.Log);
 
         try
         {
             LilithsLogger.Info("LilithsHeart", $"{MyPluginInfo.PLUGIN_NAME} v{MyPluginInfo.PLUGIN_VERSION} loaded.");
 
-            HeartConfig.Initialize(Config);
-            PrefabRegistry.Initialize();
-            HeartEventBus.Initialize();
-            ModuleRegistry.Initialize();
-
-            // [CHANGED] Unpatch first to prevent orphaned patches if Load()
-            //           is somehow called more than once during hot-reload.
+            // [CHANGED] Initialization sequence temporarily simplified.
+            //           HeartConfig, EventBus, and ModuleRegistry will be
+            //           added back as each system is written.
             _harmony?.UnpatchSelf();
             _harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             _harmony.PatchAll();
@@ -46,8 +36,6 @@ public class HeartPlugin : BasePlugin
     public override bool Unload()
     {
         _harmony?.UnpatchSelf();
-        HeartEventBus.Shutdown();
-        ModuleRegistry.Shutdown();
 
         LilithsLogger.Info("LilithsHeart", "LilithsHeart unloaded.");
         return true;
