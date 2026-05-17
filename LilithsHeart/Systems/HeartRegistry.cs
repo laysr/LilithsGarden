@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 
 // ============================================================
-//  HeartRegistry — LilithsGarden Module Registration Hub
+//  HeartRegistry — LilithsHeart Module Registration Hub
 //
-//  Purpose: Each LilithsGarden module announces itself here
+//  Purpose: Each LilithsHeart module announces itself here
 //  on load. This gives Heart and other modules awareness of
 //  what is currently loaded without hard assembly references.
 //
@@ -53,7 +53,7 @@ public static class HeartRegistry
     }
 
     /// <summary>
-    /// Register a LilithsGarden module.
+    /// Register a LilithsHeart module.
     /// Call this in your module's Plugin Load().
     /// Safe to call multiple times with the same ID — later calls update the entry.
     /// </summary>
@@ -89,7 +89,7 @@ public static class HeartRegistry
     /// </summary>
     public static void LogSummary()
     {
-        LilithsLogger.Info(LOG_SOURCE, "=== LilithsGarden Modules ===");
+        LilithsLogger.Info(LOG_SOURCE, "=== LilithsHeart Modules ===");
 
         if (_modules.Count == 0)
         {
@@ -106,7 +106,7 @@ public static class HeartRegistry
 }
 
 /// <summary>
-/// Metadata describing a registered LilithsGarden module.
+/// Metadata describing a registered LilithsHeart module.
 /// </summary>
 public class ModuleInfo
 {

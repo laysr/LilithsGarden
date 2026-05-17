@@ -1,5 +1,5 @@
 // ============================================================
-//  HeartEvents — Core event definitions for LilithsGarden.
+//  HeartEvents — Core event definitions for LilithsHeart.
 //  New events are added here as each module requires them.
 // ============================================================
 

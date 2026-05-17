@@ -12,11 +12,11 @@ public static class PrefabNameResolver
     static readonly Dictionary<string, PrefabGUID> _newNameToGuid = new();
     static readonly Dictionary<string, PrefabGUID> _originalNameToGuid = new();
 
-    // [CHANGED] Updated config directory to LilithsGarden/Names/
-    //           for a cleaner shared config folder structure across the suite.
+    // [CHANGED] Renamed path root from LilithsGarden to LilithsHeart.
+    //           All config files for the suite now live under BepInEx/config/LilithsHeart/.
     static readonly string ConfigDir = Path.Combine(
         BepInEx.Paths.ConfigPath,
-        "LilithsGarden",
+        "LilithsHeart",
         "Names"
     );
 
@@ -69,8 +69,6 @@ public static class PrefabNameResolver
                 if (!string.IsNullOrEmpty(entry.OriginalName))
                     _originalNameToGuid[entry.OriginalName] = guid;
 
-                // [CHANGED] NewNames must be PascalCase with no spaces.
-                //           e.g. "BloodEssence" not "Blood Essence"
                 if (!string.IsNullOrEmpty(entry.NewName))
                     _newNameToGuid[entry.NewName] = guid;
             }
@@ -84,44 +82,26 @@ public static class PrefabNameResolver
     }
 
     /// <summary>
-    /// Attempts to resolve a name or GUID string to a PrefabGUID.
-    /// Resolution order:
-    ///   1. NewName (PascalCase admin-friendly name, e.g. "BloodEssence")
-    ///   2. OriginalName (exact game prefab name, e.g. "Item_BloodEssence_T01")
-    ///   3. Raw GUID integer string (e.g. "862477668")
-    /// Returns false and PrefabGUID.Empty if all three lookups fail.
+    /// Attempts to resolve a prefab name to a PrefabGUID.
+    /// Checks NewName first (admin config names), then OriginalName (exact game names).
+    /// Returns false and PrefabGUID.Empty if not found.
     /// </summary>
     public static bool TryResolve(string name, out PrefabGUID guid)
     {
-        // 1. NewName lookup
         if (_newNameToGuid.TryGetValue(name, out guid))
             return true;
 
-        // 2. OriginalName lookup
         if (_originalNameToGuid.TryGetValue(name, out guid))
             return true;
 
-        // 3. Raw GUID integer lookup
-        // [ADDED] Allows configs and code to reference prefabs by raw integer
-        //         string without needing a name entry in the JSON files.
-        if (int.TryParse(name, out int guidValue))
-        {
-            guid = new PrefabGUID(guidValue);
-            return true;
-        }
-
         guid = Empty;
-        LilithsLogger.Warning(LOG_SOURCE, $"Could not resolve: '{name}'");
+        LilithsLogger.Warning(LOG_SOURCE, $"Could not resolve prefab name: '{name}'");
         return false;
     }
 }
 
 public class PrefabNameEntry
 {
-    // OriginalName: exact game prefab name e.g. "Item_BloodEssence_T01"
     public string OriginalName { get; set; } = string.Empty;
-
-    // NewName: PascalCase admin-friendly name e.g. "BloodEssence"
-    // [CHANGED] No spaces allowed — use PascalCase convention.
     public string NewName { get; set; } = string.Empty;
 }
