@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>LilithsCookbook</AssemblyName>
+    <Version>0.1.0</Version>
+    <BepInExPluginGuid>audaciousbovine.lilithscookbook</BepInExPluginGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputPath>D:\My Programs\V Rising Dedicated Server Launcher\DedicatedServerLauncher\VRisingServer\BepInEx\plugins</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilithsHeart\LilithsHeart.csproj" />
+  </ItemGroup>
+</Project>

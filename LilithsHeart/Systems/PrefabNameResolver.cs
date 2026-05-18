@@ -12,6 +12,11 @@ public static class PrefabNameResolver
     static readonly Dictionary<string, PrefabGUID> _newNameToGuid = new();
     static readonly Dictionary<string, PrefabGUID> _originalNameToGuid = new();
 
+    // Reverse lookups — populated alongside the forward dictionaries.
+    // Used by TryResolveName() to go from GUID back to a human-readable name.
+    static readonly Dictionary<int, string> _guidToNewName = new();
+    static readonly Dictionary<int, string> _guidToOriginalName = new();
+
     // [CHANGED] Renamed path root from LilithsGarden to LilithsHeart.
     //           All config files for the suite now live under BepInEx/config/LilithsHeart/.
     static readonly string ConfigDir = Path.Combine(
@@ -67,10 +72,16 @@ public static class PrefabNameResolver
                 var guid = new PrefabGUID(guidValue);
 
                 if (!string.IsNullOrEmpty(entry.OriginalName))
+                {
                     _originalNameToGuid[entry.OriginalName] = guid;
+                    _guidToOriginalName[guidValue] = entry.OriginalName;
+                }
 
                 if (!string.IsNullOrEmpty(entry.NewName))
+                {
                     _newNameToGuid[entry.NewName] = guid;
+                    _guidToNewName[guidValue] = entry.NewName;
+                }
             }
 
             LilithsLogger.Info(LOG_SOURCE, $"Loaded '{Path.GetFileName(filePath)}'.");
@@ -96,6 +107,23 @@ public static class PrefabNameResolver
 
         guid = Empty;
         LilithsLogger.Warning(LOG_SOURCE, $"Could not resolve prefab name: '{name}'");
+        return false;
+    }
+
+    /// <summary>
+    /// Attempts to resolve a PrefabGUID back to a human-readable name.
+    /// Checks NewName first (admin config names), then OriginalName (exact game names).
+    /// Returns false and an empty string if not found.
+    /// </summary>
+    public static bool TryResolveName(PrefabGUID guid, out string name)
+    {
+        if (_guidToNewName.TryGetValue(guid._Value, out name!))
+            return true;
+
+        if (_guidToOriginalName.TryGetValue(guid._Value, out name!))
+            return true;
+
+        name = string.Empty;
         return false;
     }
 }
