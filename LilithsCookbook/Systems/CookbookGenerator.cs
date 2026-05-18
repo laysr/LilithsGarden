@@ -53,9 +53,14 @@ public static class CookbookGenerator
     // ── ECS generation (call after Heart.OnInitialized) ──────────────────────
 
     /// <summary>
-    /// If GenerateAllRecipes is enabled in CookbookConfig, iterates all recipe
-    /// prefab entities, serializes their current vanilla state to all-recipes.json,
-    /// then disables the setting so it does not run again on the next boot.
+    /// If GenerateAllRecipes is enabled in CookbookConfig, iterates all entries in
+    /// GameDataSystem.RecipeHashLookupMap — which contains only recipe entities —
+    /// serializes their current vanilla state to all-recipes.json, then disables
+    /// the setting so it does not run again on the next boot.
+    ///
+    /// We use RecipeHashLookupMap instead of iterating the full PrefabGuidToEntityMap
+    /// because the prefab map contains all entity types and HasComponent checks on
+    /// non-recipe entities are unreliable in this context.
     /// </summary>
     public static void GenerateAllRecipesIfRequested()
     {
@@ -67,13 +72,24 @@ public static class CookbookGenerator
         try
         {
             var entries   = new Dictionary<string, RecipeEntry>();
+            var recipeMap = Heart.GameDataSystem.RecipeHashLookupMap;
             var prefabMap = Heart.PrefabCollectionSystem._PrefabGuidToEntityMap;
 
-            foreach (var kvp in prefabMap)
+            foreach (var kvp in recipeMap)
             {
-                var guid   = kvp.Key;
-                var entity = kvp.Value;
+                var guid = kvp.Key;
 
+                // Look up the actual entity from the prefab map to access buffers.
+                if (!prefabMap.TryGetValue(guid, out var entity))
+                    continue;
+
+                // Skip deferred ECB entities — negative Index means not yet
+                // realized in the EntityManager. Touching them throws ArgumentException.
+                if (entity.Index < 0)
+                    continue;
+
+                // Read RecipeData directly from the prefab entity rather than from the
+                // map value — the map struct does not have CraftDuration populated correctly.
                 if (!entity.TryGetComponent<RecipeData>(out var recipeData))
                     continue;
 
