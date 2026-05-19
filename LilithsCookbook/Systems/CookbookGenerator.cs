@@ -1,10 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ProjectM;
+using Unity.Entities;
 using LilithsHeart.Config;
 using LilithsHeart.Foundation;
 using LilithsHeart.Prefabs;
-using LilithsCookbook.Config;   // [CHANGED] was LilithsCookbook.Systems
+using LilithsCookbook.Config;
 using LilithsCookbook.Data;
 
 namespace LilithsCookbook.Systems;
@@ -71,23 +72,32 @@ public static class CookbookGenerator
             var recipeMap = Heart.GameDataSystem.RecipeHashLookupMap;
             var entries   = new Dictionary<string, RecipeEntry>(recipeMap.Count());
 
+            // RecipeHashLookupMap returns RecipeData directly (not Entity).
+            // Use it to enumerate known recipe GUIDs and read scalar data.
+            // Look up Entity separately via PrefabGuidToEntityMap for buffer access.
+            var prefabMap = Heart.PrefabCollectionSystem._PrefabGuidToEntityMap;
+
             foreach (var kvp in recipeMap)
             {
-                var entity = kvp.Value;
+                var recipeData = kvp.Value;
 
                 if (!PrefabNameResolver.TryResolveName(kvp.Key, out string recipeName))
                     recipeName = kvp.Key.GuidHash.ToString();
 
                 var entry = new RecipeEntry { ChangesEnabled = false };
 
-                if (entity.Has<RecipeData>())
+                // Read scalar fields directly from the RecipeData struct.
+                entry.CraftDuration        = recipeData.CraftDuration;
+                entry.AlwaysUnlocked       = recipeData.AlwaysUnlocked;
+                entry.HideInStation        = recipeData.HideInStation;
+                entry.IgnoreServerSettings = recipeData.IgnoreServerSettings;
+                entry.HudSortingOrder      = recipeData.HudSortingOrder;
+
+                // Look up Entity for buffer access. If not found, record scalar data only.
+                if (!prefabMap.TryGetValue(kvp.Key, out Entity entity))
                 {
-                    var data = entity.Read<RecipeData>();
-                    entry.CraftDuration        = data.CraftDuration;
-                    entry.AlwaysUnlocked       = data.AlwaysUnlocked;
-                    entry.HideInStation        = data.HideInStation;
-                    entry.IgnoreServerSettings = data.IgnoreServerSettings;
-                    entry.HudSortingOrder      = data.HudSortingOrder;
+                    entries[recipeName] = entry;
+                    continue;
                 }
 
                 if (entity.TryGetBuffer<RecipeRequirementBuffer>(out var reqBuffer) && reqBuffer.Length > 0)

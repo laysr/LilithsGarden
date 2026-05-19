@@ -69,7 +69,8 @@ public static class RecipeSystem
                 ApplyOptionalBuffer(recipeEntity, entry.UseRecipeLinks.Value, entry.RecipeLinks, recipeName,
                     ApplyRecipeLinks);
 
-            recipeMap[guid] = recipeEntity;
+            // Changes are applied in-place via Write() calls in each Apply* method.
+            // No write-back to recipeMap needed — RegisterRecipes() re-reads from ECS.
             changed++;
         }
 
