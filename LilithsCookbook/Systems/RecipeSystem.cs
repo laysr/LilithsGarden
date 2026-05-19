@@ -1,7 +1,7 @@
 using ProjectM;
 using Stunlock.Core;
 using Unity.Entities;
-using LilithsHeart;
+using LilithsHeart.Foundation;
 using LilithsHeart.Prefabs;
 using LilithsCookbook.Data;
 

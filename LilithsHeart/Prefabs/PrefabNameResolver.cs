@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Stunlock.Core;
 using LilithsHeart.Config;
+using LilithsHeart.Foundation;
 
 namespace LilithsHeart.Prefabs;
 

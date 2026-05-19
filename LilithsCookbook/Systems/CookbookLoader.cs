@@ -1,5 +1,5 @@
 using System.Text.Json;
-using LilithsHeart;
+using LilithsHeart.Foundation;
 using LilithsCookbook.Data;
 
 namespace LilithsCookbook.Systems;

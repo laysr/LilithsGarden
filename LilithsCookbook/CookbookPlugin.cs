@@ -1,8 +1,8 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Unity.IL2CPP;
-using LilithsHeart;
 using LilithsHeart.Config;
+using LilithsHeart.Foundation;
 using LilithsCookbook.Config;   // [CHANGED] was LilithsCookbook.Systems
 using LilithsCookbook.Data;
 using LilithsCookbook.Systems;

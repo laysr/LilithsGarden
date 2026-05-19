@@ -1,16 +1,11 @@
 using BepInEx.Logging;
 using LilithsHeart.Config;
 
-namespace LilithsHeart;
+// [CHANGED] Moved from LilithsHeart/ root → Foundation/.
+//           Namespace updated: LilithsHeart → LilithsHeart.Foundation.
 
-// [CHANGED] Renamed from LilithsLogger to HeartLogger.
-//           LilithsLogger used the suite prefix while every other type in this
-//           assembly uses the Heart prefix (HeartConfig, HeartPaths, HeartRegistry, etc).
-//           HeartLogger is consistent with that convention and makes it immediately
-//           clear which assembly owns the logger.
-//
-//           All references across LilithsHeart and LilithsCookbook must be updated
-//           from LilithsLogger → HeartLogger.
+namespace LilithsHeart.Foundation;
+
 public static class HeartLogger
 {
     private static ManualLogSource _logger = null!;

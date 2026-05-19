@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LilithsHeart.Foundation;
 
 // ============================================================
 //  HeartEventBus — Lightweight pub/sub event system

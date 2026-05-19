@@ -1,5 +1,6 @@
 using HarmonyLib;
 using ProjectM.Gameplay.WarEvents;
+using LilithsHeart.Foundation;
 
 namespace LilithsHeart.Patches;
 

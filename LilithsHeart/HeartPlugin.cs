@@ -4,8 +4,8 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using LilithsHeart.Config;
 using LilithsHeart.Events;
+using LilithsHeart.Foundation;
 using LilithsHeart.Modules;
-// HeartPaths now lives in LilithsHeart.Config — covered by the using above.
 
 namespace LilithsHeart;
 

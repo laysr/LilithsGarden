@@ -1,5 +1,5 @@
 using BepInEx.Configuration;
-using LilithsHeart;
+using LilithsHeart.Foundation;
 
 namespace LilithsCookbook.Config;
 

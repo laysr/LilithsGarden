@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LilithsHeart.Foundation;
 
 // ============================================================
 //  HeartRegistry — LilithsHeart Module Registration Hub

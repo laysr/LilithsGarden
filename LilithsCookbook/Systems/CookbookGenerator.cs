@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ProjectM;
-using LilithsHeart;
 using LilithsHeart.Config;
+using LilithsHeart.Foundation;
 using LilithsHeart.Prefabs;
 using LilithsCookbook.Config;   // [CHANGED] was LilithsCookbook.Systems
 using LilithsCookbook.Data;

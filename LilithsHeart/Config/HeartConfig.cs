@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using LilithsHeart.Foundation;
 
 namespace LilithsHeart.Config;
 

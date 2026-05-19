@@ -1,12 +1,17 @@
 using ProjectM;
 using Unity.Entities;
 
-namespace LilithsHeart.Systems;
+// [CHANGED] Moved from Systems/ → Foundation/.
+//           Namespace updated: LilithsHeart.Systems → LilithsHeart.Foundation.
+//           EntityExtensions is core ECS infrastructure used by every module
+//           that touches components or buffers — it belongs in Foundation
+//           alongside Heart and HeartLogger rather than in a Systems folder
+//           that implied it was one system among many.
+
+namespace LilithsHeart.Foundation;
 
 public static class EntityExtensions
 {
-    private const string LOG_SOURCE = "LilithsHeart.EntityExtensions";
-
     public delegate void WithRefHandler<T>(ref T item) where T : struct;
 
     /// <summary>
@@ -26,9 +31,7 @@ public static class EntityExtensions
     /// Reads a component from the entity.
     /// </summary>
     public static T Read<T>(this Entity entity) where T : struct
-    {
-        return Heart.EntityManager.GetComponentData<T>(entity);
-    }
+        => Heart.EntityManager.GetComponentData<T>(entity);
 
     /// <summary>
     /// Writes a component to the entity.
@@ -44,9 +47,7 @@ public static class EntityExtensions
     /// Returns true if the entity has the specified component.
     /// </summary>
     public static bool Has<T>(this Entity entity) where T : struct
-    {
-        return Heart.EntityManager.HasComponent<T>(entity);
-    }
+        => Heart.EntityManager.HasComponent<T>(entity);
 
     /// <summary>
     /// Adds a component to the entity if it does not already have it.
@@ -70,17 +71,13 @@ public static class EntityExtensions
     /// Reads a DynamicBuffer from the entity.
     /// </summary>
     public static DynamicBuffer<T> ReadBuffer<T>(this Entity entity) where T : struct
-    {
-        return Heart.EntityManager.GetBuffer<T>(entity);
-    }
+        => Heart.EntityManager.GetBuffer<T>(entity);
 
     /// <summary>
     /// Adds a DynamicBuffer to the entity and returns it.
     /// </summary>
     public static DynamicBuffer<T> AddBuffer<T>(this Entity entity) where T : struct
-    {
-        return Heart.EntityManager.AddBuffer<T>(entity);
-    }
+        => Heart.EntityManager.AddBuffer<T>(entity);
 
     /// <summary>
     /// Attempts to get a DynamicBuffer from the entity.

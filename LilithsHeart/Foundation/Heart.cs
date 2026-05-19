@@ -5,7 +5,10 @@ using LilithsHeart.Config;
 using LilithsHeart.Events;
 using LilithsHeart.Prefabs;
 
-namespace LilithsHeart;
+// [CHANGED] Moved from LilithsHeart/ root → Foundation/.
+//           Namespace updated: LilithsHeart → LilithsHeart.Foundation.
+
+namespace LilithsHeart.Foundation;
 
 public static class Heart
 {
@@ -44,11 +47,9 @@ public static class Heart
 
         HeartLogger.Info(LOG_SOURCE, "Heart initializing...");
 
-        // [CHANGED] PrefabNameExporter (singular) replaces PrefabNamesExporter.
-        //           Namespace updated: Systems → Prefabs.
-        //           Export runs first so the Names directory and JSON files exist
-        //           before PrefabNameResolver tries to load from them.
-        //           On subsequent boots, Export() is a near-no-op (all files exist).
+        // PrefabNameExporter runs first so the Names directory and JSON files
+        // exist before PrefabNameResolver tries to load from them.
+        // On subsequent boots, Export() is a near-no-op (all files exist).
         PrefabNameExporter.Export();
 
         PrefabNameResolver.Initialize();
