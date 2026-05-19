@@ -19,9 +19,12 @@ public static class CookbookConfig
             section:      "Generation",
             key:          "GenerateAllRecipes",
             defaultValue: false,
+            // [CHANGED] Updated path in description to reflect the new flat structure.
+            //           Old: BepInEx/config/LilithsHeart/LilithsCookbook/Recipes/all-recipes.json
+            //           New: BepInEx/config/LilithsHeart/Recipes/all-recipes.json
             description:  "When set to true, generates a JSON file containing all existing vanilla recipes " +
                           "with ChangesEnabled set to false. The file will be written to " +
-                          "BepInEx/config/LilithsHeart/LilithsCookbook/Recipes/all-recipes.json on next boot. " +
+                          "BepInEx/config/LilithsHeart/Recipes/all-recipes.json on next boot. " +
                           "This setting will automatically reset to false after generation."
         );
 

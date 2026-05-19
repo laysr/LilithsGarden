@@ -11,16 +11,19 @@ public static class CookbookGenerator
 {
     private const string LOG_SOURCE = "LilithsCookbook.CookbookGenerator";
 
-    // ── Path constants (shared with CookbookLoader via CookbookPlugin) ────────
+    // ── Paths ─────────────────────────────────────────────────────────────────
+    //
+    // [CHANGED] Replaced manual Path.Combine constructions with HeartPaths.DataDir().
+    //           All suite config lives under BepInEx/config/LilithsHeart/ — child
+    //           modules do not create their own subfolder. Recipes and Stations are
+    //           category directories directly under the Heart root, consistent with
+    //           how Localization/ and Names/ are structured.
+    //
+    //           Old: BepInEx/config/LilithsHeart/LilithsCookbook/Recipes/
+    //           New: BepInEx/config/LilithsHeart/Recipes/
 
-    public static readonly string RootDir = Path.Combine(
-        BepInEx.Paths.ConfigPath,
-        "LilithsHeart",
-        "LilithsCookbook"
-    );
-
-    public static readonly string RecipesDir  = Path.Combine(RootDir, "Recipes");
-    public static readonly string StationsDir = Path.Combine(RootDir, "Stations");
+    public static readonly string RecipesDir  = HeartPaths.DataDir("Recipes");
+    public static readonly string StationsDir = HeartPaths.DataDir("Stations");
 
     static readonly string ExampleRecipesPath  = Path.Combine(RecipesDir,  "example-recipes.json");
     static readonly string ExampleStationsPath = Path.Combine(StationsDir, "example-stations.json");
@@ -28,8 +31,8 @@ public static class CookbookGenerator
 
     static readonly JsonSerializerOptions _writeOptions = new()
     {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        WriteIndented              = true,
+        DefaultIgnoreCondition     = JsonIgnoreCondition.WhenWritingNull
     };
 
     // ── Initialization (no ECS — safe to call from Plugin.Load) ─────────────
@@ -93,7 +96,9 @@ public static class CookbookGenerator
                 if (!entity.TryGetComponent<RecipeData>(out var recipeData))
                     continue;
 
-                // Prefer human-readable name; fall back to raw GUID integer.
+                // [CHANGED] TryResolveName(PrefabGUID) is now the correct call for GUID → name
+                //           reverse lookups. TryResolve(string) is for name → GUID forward lookups.
+                //           Falls back to raw GUID integer string if no name is registered.
                 if (!PrefabNameResolver.TryResolveName(guid, out string recipeName))
                     recipeName = guid._Value.ToString();
 
@@ -208,9 +213,6 @@ public static class CookbookGenerator
 
     static void WriteExampleRecipes()
     {
-        // Recipe_Weapon_Sword_T04_Copper_Reinforced is used as the primary example
-        // since we have its full prefab dump. A second minimal entry demonstrates
-        // that omitted fields are simply left at their vanilla values.
         var data = new CookbookRecipeData
         {
             Recipes = new Dictionary<string, RecipeEntry>
@@ -246,10 +248,6 @@ public static class CookbookGenerator
                 {
                     ChangesEnabled = false,
                     CraftDuration  = 2f
-                    // Only fields you specify are applied — omitted fields keep their vanilla values.
-                    // Set UseRepairCosts = false to strip repair costs entirely.
-                    // Set UseUnitOutputs = false to strip unit outputs entirely.
-                    // Set UseRecipeLinks = false to strip recipe links entirely.
                 }
             }
         };

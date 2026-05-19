@@ -2,6 +2,7 @@ using ProjectM;
 using Stunlock.Core;
 using Unity.Entities;
 using LilithsHeart.Systems;
+using LilithsHeart.Config;
 
 namespace LilithsHeart;
 
@@ -48,6 +49,12 @@ public static class Heart
         PrefabNamesExporter.Export();
 
         PrefabNameResolver.Initialize();
+
+        // [ADDED] LocalizationConfig loads after prefab names are resolved
+        //         so that future validation (key exists in resolver) is possible.
+        //         Reads once from disk — no further I/O after this point.
+        LocalizationConfig.Initialize();
+
         _initialized = true;
 
         LilithsLogger.Info(LOG_SOURCE, "Heart initialized.");

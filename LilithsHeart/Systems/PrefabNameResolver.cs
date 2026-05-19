@@ -9,21 +9,18 @@ public static class PrefabNameResolver
 
     public static readonly PrefabGUID Empty = new PrefabGUID(0);
 
-    static readonly Dictionary<string, PrefabGUID> _newNameToGuid = new();
+    // Name → GUID (forward lookups — used when loading config files)
+    static readonly Dictionary<string, PrefabGUID> _newNameToGuid      = new();
     static readonly Dictionary<string, PrefabGUID> _originalNameToGuid = new();
 
-    // Reverse lookups — populated alongside the forward dictionaries.
-    // Used by TryResolveName() to go from GUID back to a human-readable name.
-    static readonly Dictionary<int, string> _guidToNewName = new();
-    static readonly Dictionary<int, string> _guidToOriginalName = new();
+    // [ADDED] GUID → name (reverse lookup — used by generators that iterate
+    //         ECS entities and need a human-readable name for each GUID).
+    //         Prefers NewName over OriginalName when both exist, so generated
+    //         files use the same admin-facing names as config inputs.
+    static readonly Dictionary<int, string> _guidToName = new();
 
-    // [CHANGED] Renamed path root from LilithsGarden to LilithsHeart.
-    //           All config files for the suite now live under BepInEx/config/LilithsHeart/.
-    static readonly string ConfigDir = Path.Combine(
-        BepInEx.Paths.ConfigPath,
-        "LilithsHeart",
-        "Names"
-    );
+    // [CHANGED] Replaced inline path construction with HeartPaths.NamesDir.
+    static readonly string ConfigDir = HeartPaths.NamesDir;
 
     public static void Initialize()
     {
@@ -44,7 +41,7 @@ public static class PrefabNameResolver
         foreach (var file in files)
             LoadPrefabNames(file);
 
-        LilithsLogger.Info(LOG_SOURCE, $"Initialized with {_newNameToGuid.Count} entries from {files.Length} file(s).");
+        LilithsLogger.Info(LOG_SOURCE, $"Initialized with {_guidToName.Count} entries from {files.Length} file(s).");
     }
 
     static void LoadPrefabNames(string filePath)
@@ -57,11 +54,9 @@ public static class PrefabNameResolver
 
         try
         {
-            var json = File.ReadAllText(filePath);
-            var entries = JsonSerializer.Deserialize<Dictionary<string, PrefabNameEntry>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var json    = File.ReadAllText(filePath);
+            var entries = JsonSerializer.Deserialize<Dictionary<string, PrefabNameEntry>>(json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (entries == null) return;
 
@@ -72,16 +67,19 @@ public static class PrefabNameResolver
                 var guid = new PrefabGUID(guidValue);
 
                 if (!string.IsNullOrEmpty(entry.OriginalName))
-                {
                     _originalNameToGuid[entry.OriginalName] = guid;
-                    _guidToOriginalName[guidValue] = entry.OriginalName;
-                }
 
                 if (!string.IsNullOrEmpty(entry.NewName))
-                {
                     _newNameToGuid[entry.NewName] = guid;
-                    _guidToNewName[guidValue] = entry.NewName;
-                }
+
+                // [ADDED] Reverse mapping. NewName wins over OriginalName —
+                //         admin-defined names take priority in generated output.
+                //         This means generators produce files that round-trip
+                //         cleanly back into the config loader.
+                if (!string.IsNullOrEmpty(entry.NewName))
+                    _guidToName[guidValue] = entry.NewName;
+                else if (!string.IsNullOrEmpty(entry.OriginalName))
+                    _guidToName[guidValue] = entry.OriginalName;
             }
 
             LilithsLogger.Info(LOG_SOURCE, $"Loaded '{Path.GetFileName(filePath)}'.");
@@ -92,8 +90,10 @@ public static class PrefabNameResolver
         }
     }
 
+    // ── Forward lookup (name → GUID) ────────────────────────
+
     /// <summary>
-    /// Attempts to resolve a prefab name to a PrefabGUID.
+    /// Resolves a prefab name string to a PrefabGUID.
     /// Checks NewName first (admin config names), then OriginalName (exact game names).
     /// Returns false and PrefabGUID.Empty if not found.
     /// </summary>
@@ -110,17 +110,21 @@ public static class PrefabNameResolver
         return false;
     }
 
+    // ── Reverse lookup (GUID → name) ────────────────────────
+
     /// <summary>
-    /// Attempts to resolve a PrefabGUID back to a human-readable name.
-    /// Checks NewName first (admin config names), then OriginalName (exact game names).
-    /// Returns false and an empty string if not found.
+    /// Resolves a PrefabGUID to a human-readable name.
+    /// Prefers NewName (admin-defined) over OriginalName.
+    /// Returns false and an empty string if the GUID has no known name.
+    ///
+    /// Use this in generators that iterate ECS entities and need
+    /// readable names for config file output.
+    ///
+    /// [PERFORMANCE] O(1) dictionary lookup on the GUID int value.
     /// </summary>
     public static bool TryResolveName(PrefabGUID guid, out string name)
     {
-        if (_guidToNewName.TryGetValue(guid._Value, out name!))
-            return true;
-
-        if (_guidToOriginalName.TryGetValue(guid._Value, out name!))
+        if (_guidToName.TryGetValue(guid._Value, out name!))
             return true;
 
         name = string.Empty;
@@ -131,5 +135,5 @@ public static class PrefabNameResolver
 public class PrefabNameEntry
 {
     public string OriginalName { get; set; } = string.Empty;
-    public string NewName { get; set; } = string.Empty;
+    public string NewName      { get; set; } = string.Empty;
 }
