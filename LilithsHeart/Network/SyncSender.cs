@@ -1,162 +1,152 @@
-using System.IO.Compression;
-using System.Text;
-using System.Text.Json;
-using Unity.Netcode;
+using Il2CppInterop.Runtime;
+using ProjectM;
+using ProjectM.Network;
+using Unity.Collections;
+using Unity.Entities;
 using LilithsHeart.Foundation;
 
 // ============================================================
 //  SyncSender — LilithsHeart
 //
-//  Sends network messages to Soul clients via Unity Netcode's
-//  CustomMessagingManager (named messages).
+//  Sends the ServerSyncPayload to connecting Soul clients using
+//  V Rising's existing chat message infrastructure.
 //
-//  Two channels:
-//  ─────────────
-//  • "LilithsGarden_Sync"  — ServerSyncPayload, sent once on connect.
-//                            Uses SyncPayloadCache.CachedBytes directly
-//                            — no serialization at send time.
+//  Why chat messages instead of CustomMessagingManager?
+//  ─────────────────────────────────────────────────────
+//  Unity.Netcode (FastBufferWriter, CustomMessagingManager etc.)
+//  is not exposed by VampireReferenceAssemblies and the DLLs do
+//  not exist on disk in an IL2CPP build. The established pattern
+//  across all shipped V Rising client mods (Eclipse, ZUI, XPShared)
+//  is to use ChatMessageServerEvent with ServerChatMessageType.System
+//  for server→client data transport. Soul intercepts these on the
+//  client side before they reach the chat UI.
 //
-//  • "LilithsGarden_Event" — ServerEventPayload, sent per trigger.
-//                            Serialized and compressed fresh per send
-//                            since event data is moment-specific.
+//  Chunking:
+//  ─────────
+//  ChatMessageServerEvent.MessageText is FixedString512Bytes (~510
+//  usable chars). We split the JSON payload across multiple messages,
+//  each prefixed [[LG:N]] where N is the chunk index, and a final
+//  [[LG:end]] sentinel. Soul reassembles in order.
 //
-//  Message format (both channels):
-//  ────────────────────────────────
-//  [ 4 bytes: int32 payload length ][ N bytes: GZip-compressed JSON ]
+//  Message format per chunk:
+//      [[LG:0]]<chunk content>
+//      [[LG:1]]<chunk content>
+//      [[LG:end]]
 //
-//  The length prefix lets Soul's reader know how many bytes to read
-//  before attempting decompression.
-//
-//  [PERFORMANCE] Sync send: memcpy of cached bytes into FastBufferWriter.
-//                Event send: JSON serialize + GZip per occurrence.
-//                Both run on the server's main thread at low frequency
-//                (connect events, game triggers) — cost is acceptable.
+//  [PERFORMANCE] Chunking runs once per client connect on the server
+//                main thread. A typical localization payload will be
+//                a few KB of JSON — roughly 10-20 messages.
+//                Acceptable cost for a one-time connect event.
 // ============================================================
 
 namespace LilithsHeart.Network;
 
 public static class SyncSender
 {
-    private const string LOG_SOURCE    = "LilithsHeart.SyncSender";
-    public  const string SyncChannel   = "LilithsGarden_Sync";
-    public  const string EventChannel  = "LilithsGarden_Event";
+    private const string LOG_SOURCE = "LilithsHeart.SyncSender";
 
-    // ── Sync payload (connect-time) ─────────────────────────
+    // Prefix Soul uses to identify LilithsGarden messages in chat stream.
+    public const string CHUNK_PREFIX = "[[LG:";
+    public const string CHUNK_END    = "[[LG:end]]";
+
+    // FixedString512Bytes fits 510 chars. Reserve ~12 chars for the
+    // [[LG:NNN]] prefix, leaving 450 for content with UTF-8 headroom.
+    private const int MAX_CHUNK_CONTENT = 450;
+
+    // [PERFORMANCE] Static readonly component arrays — allocated once.
+    static readonly ComponentType[] _networkEventComponents =
+    [
+        ComponentType.ReadOnly(Il2CppType.Of<FromCharacter>()),
+        ComponentType.ReadOnly(Il2CppType.Of<NetworkEventType>()),
+        ComponentType.ReadOnly(Il2CppType.Of<SendNetworkEventTag>()),
+        ComponentType.ReadOnly(Il2CppType.Of<ChatMessageServerEvent>())
+    ];
+
+    static readonly NetworkEventType _networkEventType = new()
+    {
+        IsAdminEvent = false,
+        EventId      = NetworkEvents.EventId_ChatMessageServerEvent,
+        IsDebugEvent = false,
+    };
+
+    // ── Public API ───────────────────────────────────────────
 
     /// <summary>
-    /// Sends the cached ServerSyncPayload to a specific connecting client.
-    /// Called from ClientConnectPatch when a client joins.
-    /// No-ops if the cache hasn't been built yet (Heart not ready).
+    /// Sends the cached sync payload to a connecting client.
+    /// Called from ClientConnectPatch.
     /// </summary>
-    public static void SendSyncToClient(ulong clientId)
+    public static void SendSyncToClient(Entity userEntity, Entity characterEntity)
     {
-        var bytes = SyncPayloadCache.CachedBytes;
+        var json = SyncPayloadCache.CachedJson;
 
-        if (bytes == null)
+        if (json == null)
         {
             HeartLogger.Warning(LOG_SOURCE,
-                $"Sync payload cache is empty — cannot send to client {clientId}. " +
-                "Is Heart fully initialized?");
+                "Sync payload cache is empty — cannot send. Is Heart fully initialized?");
             return;
         }
 
         try
         {
-            // FastBufferWriter: 4 bytes for length prefix + N bytes for payload.
-            // [PERFORMANCE] Initial capacity pre-sized to avoid internal realloc.
-            var writer = new FastBufferWriter(4 + bytes.Length, Unity.Collections.Allocator.Temp);
+            var chunks = Chunkify(json);
+            var em     = Heart.EntityManager;
 
-            using (writer)
+            for (int i = 0; i < chunks.Count; i++)
             {
-                writer.WriteValueSafe(bytes.Length);
-                writer.WriteBytesSafe(bytes);
-
-                NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
-                    SyncChannel,
-                    clientId,
-                    writer,
-                    NetworkDelivery.ReliableFragmentedSequenced // large payload, order matters
-                );
+                SendSystemMessage(em, userEntity, characterEntity,
+                    $"{CHUNK_PREFIX}{i}]]{chunks[i]}");
             }
+
+            // End sentinel — tells Soul to reassemble and process.
+            SendSystemMessage(em, userEntity, characterEntity, CHUNK_END);
 
             HeartLogger.Info(LOG_SOURCE,
-                $"Sent sync payload to client {clientId} ({bytes.Length} bytes compressed).");
+                $"Sync payload sent in {chunks.Count} chunk(s) + end sentinel.");
         }
         catch (Exception ex)
         {
-            HeartLogger.Error(LOG_SOURCE,
-                $"Failed to send sync payload to client {clientId}: {ex.Message}");
+            HeartLogger.Error(LOG_SOURCE, $"SendSyncToClient failed: {ex.Message}");
         }
     }
 
-    // ── Event payload (trigger-based) ───────────────────────
+    // ── Internal ─────────────────────────────────────────────
 
-    /// <summary>
-    /// Sends a ServerEventPayload to a specific client.
-    /// Serializes and compresses fresh — event data is moment-specific.
-    /// </summary>
-    public static void SendEventToClient(ulong clientId, ServerEventPayload payload)
-        => SendEvent(clientId, payload, broadcast: false);
-
-    /// <summary>
-    /// Broadcasts a ServerEventPayload to all connected clients.
-    /// Use for server-wide events (e.g. world boss killed).
-    /// </summary>
-    public static void BroadcastEvent(ServerEventPayload payload)
-        => SendEvent(NetworkManager.ServerClientId, payload, broadcast: true);
-
-    static void SendEvent(ulong clientId, ServerEventPayload payload, bool broadcast)
+    static void SendSystemMessage(
+        EntityManager em,
+        Entity userEntity,
+        Entity characterEntity,
+        string text)
     {
-        try
+        // Defensive truncation — should never trigger if MAX_CHUNK_CONTENT is correct.
+        if (text.Length > 509) text = text[..509];
+
+        ChatMessageServerEvent chatEvent = new()
         {
-            var bytes = Compress(JsonSerializer.Serialize(payload));
+            MessageText   = new FixedString512Bytes(text),
+            MessageType   = ServerChatMessageType.System,
+            FromCharacter = characterEntity.GetNetworkId(),
+            FromUser      = userEntity.GetNetworkId(),
+            TimeUTC       = DateTime.UtcNow.Ticks
+        };
 
-            var writer = new FastBufferWriter(4 + bytes.Length, Unity.Collections.Allocator.Temp);
-
-            using (writer)
-            {
-                writer.WriteValueSafe(bytes.Length);
-                writer.WriteBytesSafe(bytes);
-
-                if (broadcast)
-                {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(
-                        EventChannel,
-                        writer,
-                        NetworkDelivery.ReliableSequenced
-                    );
-                }
-                else
-                {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
-                        EventChannel,
-                        clientId,
-                        writer,
-                        NetworkDelivery.ReliableSequenced
-                    );
-                }
-            }
-
-            HeartLogger.Debug(LOG_SOURCE,
-                $"Sent event {payload.Kind} to {(broadcast ? "all clients" : $"client {clientId}")} " +
-                $"({bytes.Length} bytes).");
-        }
-        catch (Exception ex)
-        {
-            HeartLogger.Error(LOG_SOURCE,
-                $"Failed to send event {payload.Kind}: {ex.Message}");
-        }
+        Entity entity = em.CreateEntity(_networkEventComponents);
+        entity.Write(new FromCharacter { Character = characterEntity, User = userEntity });
+        entity.Write(_networkEventType);
+        entity.Write(chatEvent);
     }
 
-    // ── Compression ─────────────────────────────────────────
-
-    static byte[] Compress(string json)
+    static List<string> Chunkify(string input)
     {
-        var inputBytes = Encoding.UTF8.GetBytes(json);
-        using var output = new MemoryStream();
-        using var gzip   = new GZipStream(output, CompressionLevel.Optimal);
-        gzip.Write(inputBytes, 0, inputBytes.Length);
-        gzip.Close();
-        return output.ToArray();
+        var chunks = new List<string>();
+        int pos    = 0;
+
+        while (pos < input.Length)
+        {
+            int len = Math.Min(MAX_CHUNK_CONTENT, input.Length - pos);
+            chunks.Add(input.Substring(pos, len));
+            pos += len;
+        }
+
+        return chunks;
     }
 }

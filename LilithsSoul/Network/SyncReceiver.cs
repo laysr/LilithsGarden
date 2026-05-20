@@ -1,7 +1,4 @@
-using System.IO.Compression;
-using System.Text;
 using System.Text.Json;
-using Unity.Netcode;
 using LilithsSoul.Config;
 using LilithsSoul.Foundation;
 using LilithsSoul.Localization;
@@ -9,106 +6,101 @@ using LilithsSoul.Localization;
 // ============================================================
 //  SyncReceiver — LilithsSoul
 //
-//  Registers Unity Netcode named message handlers for both
-//  Heart→Soul channels and processes incoming payloads.
+//  Intercepts system chat messages from Heart and reassembles
+//  the chunked ServerSyncPayload.
 //
-//  Channels:
-//  ─────────
-//  "LilithsGarden_Sync"  — receives ServerSyncPayload once on connect.
-//  "LilithsGarden_Event" — receives ServerEventPayload per trigger.
-//
-//  Sync payload flow:
+//  Why chat messages?
 //  ──────────────────
-//  1. Receive compressed bytes from Heart.
-//  2. Decompress + deserialize to ServerSyncPayload.
-//  3. Compare PayloadHash against cached sync.json on disk.
-//  4. If changed (or no cache): write sync.json to disk.
-//  5. Apply localization — immediately if client world is ready,
-//     or queue for ClientInitPatch to apply on world ready.
+//  Unity.Netcode's CustomMessagingManager requires types not
+//  available in VampireReferenceAssemblies. The established
+//  pattern across shipped V Rising mods (Eclipse, ZUI, XPShared)
+//  is to use ChatMessageServerEvent / ServerChatMessageType.System
+//  for server→client data. SyncReceiver integrates with that
+//  pattern by being called from a Harmony patch on the client
+//  chat system (ClientChatSystemPatch).
 //
-//  Event payload flow:
-//  ───────────────────
-//  1. Receive compressed bytes from Heart.
-//  2. Decompress + deserialize to ServerEventPayload.
-//  3. Route to appropriate handler by EventKind.
-//     (No handlers defined yet — added per module.)
+//  Chunk protocol:
+//  ───────────────
+//  Heart sends N messages of the form [[LG:N]]<content>,
+//  followed by a final [[LG:end]] sentinel.
+//  SyncReceiver accumulates content strings in order and
+//  processes the full JSON when end is received.
 //
-//  [PERFORMANCE] Decompression and deserialization run once per
-//                connect (sync) or per trigger (event).
-//                Neither is in a hot path.
-//                Disk write only occurs when PayloadHash differs.
+//  Integration point:
+//  ──────────────────
+//  ClientChatSystemPatch calls TryHandleMessage(string) for
+//  every incoming system message. Returns true if the message
+//  was a LilithsGarden chunk (consumed), false otherwise
+//  (passed through to normal chat handling).
+//
+//  [PERFORMANCE] Per-message check is a string.StartsWith call
+//                on the hot chat path — effectively free.
+//                Deserialization and disk I/O only run once per
+//                connect when [[LG:end]] is received.
 // ============================================================
 
 namespace LilithsSoul.Network;
 
 public static class SyncReceiver
 {
-    private const string LOG_SOURCE = "LilithsSoul.SyncReceiver";
+    private const string LOG_SOURCE  = "LilithsSoul.SyncReceiver";
+    private const string CHUNK_PREFIX = "[[LG:";
+    private const string CHUNK_END    = "[[LG:end]]";
 
-    // Set by ClientInitPatch when the client world is ready.
-    // Guards against injecting localization before prefabs are loaded.
+    // Accumulated chunk content strings, in arrival order.
+    static readonly List<string> _chunks = [];
+
+    // Set by ClientInitPatch when client ECS world is ready.
     static bool _clientWorldReady;
 
-    // Queued payload received before the world was ready.
-    // Applied by NotifyWorldReady() when the world comes up.
+    // Payload received before world was ready — applied on world ready.
     static ServerSyncPayload? _pendingPayload;
 
-    /// <summary>
-    /// Registers the named message handlers with Unity Netcode.
-    /// Call from SoulPlugin.Load() — handlers must be registered
-    /// before any message can arrive.
-    /// </summary>
-    public static void RegisterHandlers()
-    {
-        // Guard: NetworkManager may not be ready at plugin load time.
-        // Handlers are registered here and will fire once messages arrive.
-        var messaging = NetworkManager.Singleton?.CustomMessagingManager;
+    // ── Called from ClientChatSystemPatch ────────────────────
 
-        if (messaging == null)
+    /// <summary>
+    /// Inspects an incoming system message. If it is a LilithsGarden
+    /// chunk, accumulates it and returns true (consumed).
+    /// Returns false for unrelated messages.
+    /// </summary>
+    public static bool TryHandleMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message)) return false;
+
+        // End sentinel — reassemble and process.
+        if (message == CHUNK_END)
         {
-            SoulLogger.Warning(LOG_SOURCE,
-                "CustomMessagingManager not available at handler registration time. " +
-                "Ensure SyncReceiver.RegisterHandlers() is called after NetworkManager initializes.");
-            return;
+            ProcessAccumulatedChunks();
+            return true;
         }
 
-        messaging.RegisterNamedMessageHandler(
-            SyncSenderChannels.Sync,
-            OnSyncReceived);
+        // Numbered chunk — extract content after [[LG:N]].
+        if (message.StartsWith(CHUNK_PREFIX))
+        {
+            int closeBracket = message.IndexOf("]]", CHUNK_PREFIX.Length,
+                StringComparison.Ordinal);
 
-        messaging.RegisterNamedMessageHandler(
-            SyncSenderChannels.Event,
-            OnEventReceived);
+            if (closeBracket >= 0)
+            {
+                string content = message[(closeBracket + 2)..];
+                _chunks.Add(content);
+                return true;
+            }
+        }
 
-        SoulLogger.Info(LOG_SOURCE, "Named message handlers registered.");
-    }
-
-    /// <summary>
-    /// Unregisters handlers. Call from SoulPlugin.Unload().
-    /// </summary>
-    public static void UnregisterHandlers()
-    {
-        var messaging = NetworkManager.Singleton?.CustomMessagingManager;
-        if (messaging == null) return;
-
-        messaging.UnregisterNamedMessageHandler(SyncSenderChannels.Sync);
-        messaging.UnregisterNamedMessageHandler(SyncSenderChannels.Event);
-
-        SoulLogger.Info(LOG_SOURCE, "Named message handlers unregistered.");
+        return false;
     }
 
     /// <summary>
     /// Called by ClientInitPatch when the client ECS world is ready.
-    /// Applies any payload that arrived before the world was up.
+    /// Applies any payload that arrived before prefabs were loaded.
     /// </summary>
     public static void NotifyWorldReady()
     {
         _clientWorldReady = true;
 
-        // [ADDED] Build the prefab name → AssetGuid lookup table now that
-        //         the client world and PrefabCollectionSystem are available.
-        //         Must happen before any payload is applied so injection
-        //         has the lookup ready to use.
+        // Build the prefab name → AssetGuid lookup now that
+        // PrefabCollectionSystem is available.
         LocalizationInjector.BuildLookupTable();
 
         if (_pendingPayload != null)
@@ -120,110 +112,58 @@ public static class SyncReceiver
         }
     }
 
-    // ── Handlers ────────────────────────────────────────────
+    // ── Internal ─────────────────────────────────────────────
 
-    static void OnSyncReceived(ulong senderId, FastBufferReader reader)
+    static void ProcessAccumulatedChunks()
     {
+        if (_chunks.Count == 0)
+        {
+            SoulLogger.Warning(LOG_SOURCE,
+                "Received [[LG:end]] but chunk list is empty — ignoring.");
+            return;
+        }
+
+        var json = string.Concat(_chunks);
+        _chunks.Clear();
+
         try
         {
-            reader.ReadValueSafe(out int length);
-            var bytes = new byte[length];
-            reader.ReadBytesSafe(ref bytes, length);
-
-            var json    = Decompress(bytes);
             var payload = JsonSerializer.Deserialize<ServerSyncPayload>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (payload == null)
             {
-                SoulLogger.Warning(LOG_SOURCE, "Received null sync payload — ignoring.");
+                SoulLogger.Warning(LOG_SOURCE, "Deserialized payload is null — ignoring.");
                 return;
             }
 
             SoulLogger.Info(LOG_SOURCE,
-                $"Received sync payload from server '{payload.ServerIdentity}' " +
+                $"Sync payload received from '{payload.ServerIdentity}' " +
                 $"(hash: {payload.PayloadHash}).");
 
-            // Write to disk only if hash differs from cached version.
             WriteToDiskIfChanged(payload);
 
-            // Apply immediately if world is ready, otherwise queue.
             if (_clientWorldReady)
                 ApplyPayload(payload);
             else
-            {
-                SoulLogger.Info(LOG_SOURCE,
-                    "Client world not ready — queuing payload for application on world ready.");
                 _pendingPayload = payload;
-            }
         }
         catch (Exception ex)
         {
             SoulLogger.Error(LOG_SOURCE, $"Failed to process sync payload: {ex.Message}");
+            _chunks.Clear();
         }
     }
-
-    static void OnEventReceived(ulong senderId, FastBufferReader reader)
-    {
-        try
-        {
-            reader.ReadValueSafe(out int length);
-            var bytes = new byte[length];
-            reader.ReadBytesSafe(ref bytes, length);
-
-            var json    = Decompress(bytes);
-            var payload = JsonSerializer.Deserialize<ServerEventPayload>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (payload == null)
-            {
-                SoulLogger.Warning(LOG_SOURCE, "Received null event payload — ignoring.");
-                return;
-            }
-
-            SoulLogger.Debug(LOG_SOURCE, $"Received event: {payload.Kind}");
-            RouteEvent(payload);
-        }
-        catch (Exception ex)
-        {
-            SoulLogger.Error(LOG_SOURCE, $"Failed to process event payload: {ex.Message}");
-        }
-    }
-
-    // ── Apply ────────────────────────────────────────────────
 
     static void ApplyPayload(ServerSyncPayload payload)
     {
         LocalizationInjector.Inject(payload);
-        // Future: PrefabPatcher.Apply(payload) when gameplay data is added.
     }
-
-    static void RouteEvent(ServerEventPayload payload)
-    {
-        switch (payload.Kind)
-        {
-            case EventKind.None:
-                SoulLogger.Warning(LOG_SOURCE, "Received event with Kind=None — ignoring.");
-                break;
-
-            // Future event handlers added here per module.
-            // e.g. case EventKind.VBloodUnlocked: VBloodHandler.Handle(payload.Data); break;
-
-            default:
-                SoulLogger.Warning(LOG_SOURCE,
-                    $"Unhandled event kind: {payload.Kind}. " +
-                    "Is Soul up to date with Heart's EventKind enum?");
-                break;
-        }
-    }
-
-    // ── Disk cache ───────────────────────────────────────────
 
     static void WriteToDiskIfChanged(ServerSyncPayload payload)
     {
         var syncFile = SoulPaths.SyncFile(payload.ServerIdentity);
 
-        // Check existing hash before writing.
         if (File.Exists(syncFile))
         {
             try
@@ -241,22 +181,18 @@ public static class SyncReceiver
             }
             catch
             {
-                // Malformed cache file — overwrite it.
+                // Malformed cache — overwrite below.
             }
         }
 
-        // [PERFORMANCE] Disk write on connect — runs off hot path,
-        //               acceptable cost. Only writes when hash differs.
         try
         {
             Directory.CreateDirectory(SoulPaths.ServerDir(payload.ServerIdentity));
-
             File.WriteAllText(syncFile,
                 JsonSerializer.Serialize(payload,
                     new JsonSerializerOptions { WriteIndented = true }));
 
-            SoulLogger.Info(LOG_SOURCE,
-                $"Sync payload written to '{syncFile}'.");
+            SoulLogger.Info(LOG_SOURCE, $"Sync payload cached to '{syncFile}'.");
         }
         catch (Exception ex)
         {
@@ -264,24 +200,4 @@ public static class SyncReceiver
                 $"Failed to write sync payload to disk: {ex.Message}");
         }
     }
-
-    // ── Decompression ────────────────────────────────────────
-
-    static string Decompress(byte[] compressed)
-    {
-        using var input  = new MemoryStream(compressed);
-        using var gzip   = new GZipStream(input, CompressionMode.Decompress);
-        using var reader = new StreamReader(gzip, Encoding.UTF8);
-        return reader.ReadToEnd();
-    }
-}
-
-/// <summary>
-/// Named message channel strings — must match SyncSender.cs on the Heart side exactly.
-/// Duplicated here to avoid any assembly reference to Heart from Soul.
-/// </summary>
-internal static class SyncSenderChannels
-{
-    public const string Sync  = "LilithsGarden_Sync";
-    public const string Event = "LilithsGarden_Event";
 }

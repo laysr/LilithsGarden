@@ -19,8 +19,15 @@
 
   <ItemGroup>
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="[6.0.0-be.733]" />
-    <PackageReference Include="VampireReferenceAssemblies" Version="[1.1.12-r99041-b2]" />
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.733" IncludeAssets="compile" />
+    <!--
+      [REVERTED] Back to VampireReferenceAssemblies.
+      Networking now uses ChatMessageServerEvent (server→client system messages)
+      instead of CustomMessagingManager, so Unity.Netcode types are no longer
+      needed. VampireReferenceAssemblies provides all ProjectM/Stunlock types
+      we actually use.
+    -->
+    <PackageReference Include="VampireReferenceAssemblies" Version="1.1.12-r99041-b2" />
     <PackageReference Include="VRising.VampireCommandFramework" Version="0.10.4" />
   </ItemGroup>
 </Project>

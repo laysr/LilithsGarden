@@ -1,36 +1,27 @@
-using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using LilithsHeart.Config;
 using LilithsHeart.Foundation;
 
 // ============================================================
 //  SyncPayloadCache — LilithsHeart
 //
-//  Owns the compressed, ready-to-send bytes of ServerSyncPayload.
+//  Holds the pre-serialized ServerSyncPayload JSON string ready
+//  to be chunked and sent to any connecting Soul client.
 //
-//  Lifecycle:
-//  ──────────
-//  1. Heart.OnInitialize() calls SyncPayloadCache.Build() once
-//     after LocalizationConfig is loaded.
-//  2. On each client connect, SyncSender reads CachedBytes
-//     directly — no serialization or compression at send time.
-//  3. If LocalizationConfig.Reload() is called (admin hot-reload),
-//     it calls SyncPayloadCache.Rebuild() which eagerly re-builds
-//     so the next connecting client gets fresh data immediately.
+//  [CHANGED] Now caches JSON string instead of GZip-compressed bytes.
+//  Compression is no longer needed — the chat message transport
+//  splits by character count, not by binary size. Plain JSON is
+//  simpler to debug and avoids base64 encoding overhead.
 //
-//  Why eager rebuild on reload?
-//  ────────────────────────────
-//  Lazy rebuild would make the first connecting client after a
-//  reload pay the build cost. Eager rebuild pays it immediately
-//  at reload time — more predictable, better for server operators.
+//  Build() is called once at Heart initialization and again
+//  whenever LocalizationConfig is reloaded (server admin action).
+//  The cached string is then read by SyncSender per connect event.
 //
-//  [PERFORMANCE] Serialization + GZip compression runs once per
-//                server boot (and once per Reload() call).
-//                Send time is a memcpy of CachedBytes — zero
-//                allocation beyond the network buffer.
-//                CachedBytes is a byte[] — no lock needed for reads
-//                since it is replaced atomically via reference swap.
+//  [PERFORMANCE] Build() runs O(1) serialization at init time.
+//                SyncSender reads CachedJson with no allocation.
+//                Thread safety: volatile string reference — safe
+//                for single-writer (main thread) / multi-reader.
 // ============================================================
 
 namespace LilithsHeart.Network;
@@ -39,81 +30,55 @@ public static class SyncPayloadCache
 {
     private const string LOG_SOURCE = "LilithsHeart.SyncPayloadCache";
 
-    // Volatile so reads on other threads see the latest reference
-    // after a Rebuild() without needing a lock.
-    // [PERFORMANCE] Reference swap is atomic on all .NET platforms.
-    static volatile byte[]? _cachedBytes;
+    // volatile ensures the updated reference is visible across threads
+    // without a full lock. Safe because we only write from the main thread.
+    static volatile string? _cachedJson;
 
     /// <summary>
-    /// The compressed, serialized ServerSyncPayload ready to send.
-    /// Null only before Build() has been called.
+    /// The pre-serialized JSON payload ready to be chunked and sent.
+    /// Null until Build() has been called successfully.
     /// </summary>
-    public static byte[]? CachedBytes => _cachedBytes;
+    public static string? CachedJson => _cachedJson;
 
     /// <summary>
-    /// Builds the cache from the current LocalizationConfig state.
-    /// Call this once from Heart.OnInitialize() after LocalizationConfig
-    /// has loaded. Also called by Rebuild() on hot-reload.
+    /// Builds and caches the JSON payload from the current server state.
+    /// Call at Heart init and on localization reload.
     /// </summary>
     public static void Build(string serverIdentity)
     {
-        HeartLogger.Info(LOG_SOURCE, "Building sync payload cache...");
-
         try
         {
             var payload = ServerSyncPayload.Build(serverIdentity);
-            _cachedBytes = Compress(JsonSerializer.Serialize(payload));
+            var json    = JsonSerializer.Serialize(payload,
+                new JsonSerializerOptions { WriteIndented = false });
+
+            // Compute short hash for Soul's cache-invalidation check.
+            payload.PayloadHash = ComputeHash(json);
+
+            // Re-serialize with hash included.
+            _cachedJson = JsonSerializer.Serialize(payload,
+                new JsonSerializerOptions { WriteIndented = false });
 
             HeartLogger.Info(LOG_SOURCE,
-                $"Sync payload cached. " +
-                $"Entries: {payload.DisplayNameOverrides.Count} names, {payload.TooltipOverrides.Count} tooltips. " +
-                $"Compressed size: {_cachedBytes.Length} bytes.");
+                $"Payload cached — {_cachedJson.Length} chars, hash {payload.PayloadHash}.");
         }
         catch (Exception ex)
         {
-            HeartLogger.Error(LOG_SOURCE, $"Failed to build sync payload cache: {ex.Message}");
+            HeartLogger.Error(LOG_SOURCE, $"Build failed: {ex.Message}");
+            _cachedJson = null;
         }
     }
 
     /// <summary>
-    /// Eagerly rebuilds the cache after a LocalizationConfig.Reload().
-    /// Call this from LocalizationConfig.Reload() after the dictionaries
-    /// have been repopulated, passing the same server identity used at boot.
+    /// Invalidates the cache. Next Build() call will regenerate.
     /// </summary>
-    public static void Rebuild(string serverIdentity)
+    public static void Rebuild(string serverIdentity) => Build(serverIdentity);
+
+    // ── Internal ─────────────────────────────────────────────
+
+    static string ComputeHash(string input)
     {
-        HeartLogger.Info(LOG_SOURCE, "Rebuilding sync payload cache after reload...");
-        Build(serverIdentity);
-    }
-
-    // ── Compression ─────────────────────────────────────────
-
-    /// <summary>
-    /// GZip-compresses a JSON string to bytes.
-    /// [PERFORMANCE] Runs once per boot/reload. Cost is negligible
-    /// compared to the I/O and ECS work already done at startup.
-    /// </summary>
-    static byte[] Compress(string json)
-    {
-        var inputBytes = Encoding.UTF8.GetBytes(json);
-
-        using var output     = new MemoryStream();
-        using var gzip       = new GZipStream(output, CompressionLevel.Optimal);
-        gzip.Write(inputBytes, 0, inputBytes.Length);
-        gzip.Close(); // flush before ToArray()
-
-        return output.ToArray();
-    }
-
-    /// <summary>
-    /// Decompresses GZip bytes back to a JSON string.
-    /// Provided here for symmetry and testing — Soul has its own copy.
-    /// </summary>
-    public static string Decompress(byte[] compressed)
-    {
-        using var input  = new MemoryStream(compressed);
-        using var gzip   = new GZipStream(input, CompressionMode.Decompress);
-        using var reader = new StreamReader(gzip, Encoding.UTF8);
-        return reader.ReadToEnd();
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes)[..8];
     }
 }

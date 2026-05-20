@@ -8,17 +8,4 @@
     <OutputPath>D:\My Programs\V Rising Dedicated Server Launcher\DedicatedServerLauncher\VRisingServer\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-  <ItemGroup>
-    <!--
-      [ADDED] Direct reference to Unity.Netcode.Runtime for NetworkManager,
-      FastBufferWriter and CustomMessagingManager used in SyncSender.
-      VampireReferenceAssemblies includes server assemblies but Netcode
-      must be referenced directly from the dedicated server's managed folder.
-      Update this path to match your dedicated server installation.
-    -->
-    <Reference Include="Unity.Netcode.Runtime">
-      <HintPath>D:\My Programs\V Rising Dedicated Server Launcher\DedicatedServerLauncher\VRisingServer\VRisingServer_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
 </Project>
