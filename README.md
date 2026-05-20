@@ -11,7 +11,7 @@ A modular V Rising mod suite
 
 
 
-
+```
 [LilithsHeart] >
     [Config] >
         HeartConfig.cs - Config file for LilithsHeart
@@ -57,3 +57,4 @@ A modular V Rising mod suite
         RecipeSystem.cs - applies recipe changes
         StationSystem.cs - applies station changes
     CookbookPlugin.cs - ENTRY POINT
+```
