@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>LilithsSoul</AssemblyName>
+    <Version>0.1.0</Version>
+    <BepInExPluginGuid>audaciousbovine.lilithssoul</BepInExPluginGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Client mod — output to the client's BepInEx plugins folder.
+         Update this path to match your local V Rising client installation. -->
+    <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\VRising\BepInEx\plugins</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+</Project>

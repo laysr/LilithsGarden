@@ -9,15 +9,7 @@ using LilithsHeart.Foundation;
 //      BepInEx/config/LilithsHeart/Localization/
 //
 //  Files are loaded and merged in alphabetical order.
-//  Later files win on key conflicts, so admins can layer
-//  overrides (e.g. base.json + seasonal_event.json).
-//
-//  Format of each file:
-//  {
-//    "_readme": "...",                        ← skipped (non-object value)
-//    "Item_BloodEssence_T01":        { "DisplayName": "Vitae",     "Tooltip": "..." },
-//    "Item_Ingredient_Plant_Cotton": { "DisplayName": "Moonweave", "Tooltip": null }
-//  }
+//  Later files win on key conflicts — admins can layer overrides.
 //
 //  [PERFORMANCE] All files are read once at world ready and merged
 //                into two flat dictionaries for O(1) lookup.
@@ -26,7 +18,6 @@ using LilithsHeart.Foundation;
 
 namespace LilithsHeart.Config;
 
-// [CHANGED] LilithsLogger → HeartLogger throughout.
 public static class LocalizationConfig
 {
     private const string LOG_SOURCE = "LilithsHeart.LocalizationConfig";
@@ -54,6 +45,11 @@ public static class LocalizationConfig
 
         HeartLogger.Info(LOG_SOURCE, "Reloading localization overrides...");
         Load();
+
+        // [ADDED] Eagerly rebuild the sync payload cache so the next connecting
+        //         client receives the updated localization immediately.
+        //         This runs after Load() so the dictionaries are fully populated.
+        Heart.OnLocalizationReloaded();
     }
 
     public static string? GetDisplayName(string prefabName)
@@ -91,14 +87,7 @@ public static class LocalizationConfig
         try
         {
             var json = File.ReadAllText(filePath);
-
-            // Deserialize into Dictionary<string, JsonElement> first rather than
-            // directly into Dictionary<string, LocalizationEntry>.
-            // The example file may contain a "_readme" key whose value is a plain
-            // string, not an object. By landing in JsonElement first we can inspect
-            // each value's Kind before attempting conversion — non-Object entries
-            // are skipped cleanly without throwing.
-            var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json,
+            var raw  = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (raw == null)
@@ -113,6 +102,7 @@ public static class LocalizationConfig
 
             foreach (var (key, element) in raw)
             {
+                // Skip non-object values (e.g. _readme string).
                 if (element.ValueKind != JsonValueKind.Object) continue;
 
                 string? displayName = null;
@@ -145,31 +135,38 @@ public static class LocalizationConfig
         }
         catch (Exception ex)
         {
-            HeartLogger.Error(LOG_SOURCE, $"Failed to load '{Path.GetFileName(filePath)}': {ex.Message}");
+            HeartLogger.Error(LOG_SOURCE,
+                $"Failed to parse '{Path.GetFileName(filePath)}': {ex.Message}");
         }
     }
 
     static void EnsureExampleFile()
     {
-        var examplePath = Path.Combine(HeartPaths.LocalizationDir, "example-overrides.json");
+        var examplePath = Path.Combine(HeartPaths.LocalizationDir, "example.json");
         if (File.Exists(examplePath)) return;
 
-        var example = new Dictionary<string, object>
-        {
-            ["_readme"] = "Keys are prefab names. Set DisplayName and/or Tooltip to override vanilla strings. " +
-                          "Set ChangesEnabled to true to apply. Files are merged alphabetically — later files win.",
-            ["Item_BloodEssence_T01"] = new { DisplayName = "Vitae", Tooltip = (string?)null }
-        };
+        const string example = """
+{
+  "_readme": "Copy and rename this file (e.g. items.json). Keys are prefab OriginalName or NewName. Null leaves that field vanilla. Files load alphabetically — later files win on key conflicts.",
+  "Item_BloodEssence_T01": {
+    "DisplayName": "Vitae",
+    "Tooltip": "Concentrated life force, drawn from the living."
+  },
+  "Item_Ingredient_Plant_Cotton": {
+    "DisplayName": "Moonweave",
+    "Tooltip": null
+  }
+}
+""";
 
         try
         {
-            var json = JsonSerializer.Serialize(example, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(examplePath, json);
-            HeartLogger.Info(LOG_SOURCE, "Generated example-overrides.json.");
+            File.WriteAllText(examplePath, example);
+            HeartLogger.Info(LOG_SOURCE, $"Created example localization file at '{examplePath}'.");
         }
         catch (Exception ex)
         {
-            HeartLogger.Error(LOG_SOURCE, $"Failed to write example-overrides.json: {ex.Message}");
+            HeartLogger.Warning(LOG_SOURCE, $"Could not write example localization file: {ex.Message}");
         }
     }
 }
