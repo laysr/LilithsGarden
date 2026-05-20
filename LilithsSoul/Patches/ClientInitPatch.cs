@@ -6,29 +6,26 @@ using LilithsSoul.Network;
 // ============================================================
 //  ClientInitPatch — LilithsSoul
 //
-//  Detects when the client ECS world and prefabs are fully loaded
-//  and safe to query. Notifies SyncReceiver so any queued payload
-//  can be applied immediately.
+//  Detects when the client ECS world and prefabs are fully loaded.
 //
-//  Hook target: GameDataManager.LoadGameData (postfix)
-//  ───────────────────────────────────────────────────
-//  This fires after all prefabs and game data are loaded on the
-//  client — the correct moment for localization injection and
-//  future prefab patching. The player hasn't entered the world
-//  yet so there are no visible side effects from patching here.
+//  Hook target: GameDataManager.OnUpdate (postfix, single-fire)
+//  ──────────────────────────────────────────────────────────────
+//  GameDataManager.OnUpdate fires every frame once initialized,
+//  so we guard with a bool and only act once. This is the
+//  established pattern for client-side V Rising mods.
 //
-//  Single-fire guard ensures we only initialize once per session.
-//  On world teardown (disconnect) _initialized resets so the next
-//  session starts fresh.
+//  We cannot use LoadGameData as it doesn't exist on the client-
+//  side GameDataManager. OnUpdate fires after all prefabs and
+//  game data are ready.
 //
-//  [PERFORMANCE] Postfix runs once per session load.
-//                SyncReceiver.NotifyWorldReady() is O(1) if no
-//                pending payload, or the cost of one Apply() call.
+//  [PERFORMANCE] Guard check is a single bool read per frame
+//                until initialization — negligible cost.
+//                After first fire the patch is effectively free.
 // ============================================================
 
 namespace LilithsSoul.Patches;
 
-[HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.LoadGameData))]
+[HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]
 internal static class ClientInitPatch
 {
     private const string LOG_SOURCE = "LilithsSoul.ClientInitPatch";
@@ -36,14 +33,19 @@ internal static class ClientInitPatch
     static bool _initialized;
 
     [HarmonyPostfix]
-    static void Postfix()
+    static void Postfix(GameDataManager __instance)
     {
         if (_initialized) return;
+
+        // Guard: only fire once game data is actually loaded.
+        // GameDataManager.GameDataInitialized is the reliable flag.
+        if (!__instance.GameDataInitialized) return;
+
         _initialized = true;
 
         try
         {
-            SoulLogger.Info(LOG_SOURCE, "Client world ready.");
+            SoulLogger.Info(LOG_SOURCE, "Client world ready — game data initialized.");
             SyncReceiver.NotifyWorldReady();
         }
         catch (Exception ex)
@@ -53,9 +55,7 @@ internal static class ClientInitPatch
     }
 
     /// <summary>
-    /// Resets the initialization flag when the client disconnects.
-    /// Called from SoulPlugin.OnDisconnect (not yet implemented —
-    /// add a NetworkManager disconnect hook when needed).
+    /// Resets the initialization flag on client disconnect.
     /// </summary>
     internal static void Reset() => _initialized = false;
 }

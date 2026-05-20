@@ -5,9 +5,25 @@
     <BepInExPluginGuid>audaciousbovine.lilithssoul</BepInExPluginGuid>
   </PropertyGroup>
   <PropertyGroup>
-    <!-- Client mod — output to the client's BepInEx plugins folder.
-         Update this path to match your local V Rising client installation. -->
+    <!--
+      Client mod output path. Update to match your local V Rising installation.
+      Right-click VRising in Steam > Manage > Browse local files to find it.
+      Default path shown — adjust if your Steam library is elsewhere.
+    -->
     <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\VRising\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <!--
+      [ADDED] Direct reference to Unity.Netcode.Runtime for NetworkManager,
+      FastBufferReader/Writer and CustomMessagingManager.
+      VampireReferenceAssemblies wraps server assemblies — Netcode types
+      need to be referenced directly from the game's managed folder.
+      Update this path to match your V Rising client install location.
+    -->
+    <Reference Include="Unity.Netcode.Runtime">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\VRising\VRising_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 </Project>

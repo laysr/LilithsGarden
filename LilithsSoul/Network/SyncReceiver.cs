@@ -105,6 +105,12 @@ public static class SyncReceiver
     {
         _clientWorldReady = true;
 
+        // [ADDED] Build the prefab name → AssetGuid lookup table now that
+        //         the client world and PrefabCollectionSystem are available.
+        //         Must happen before any payload is applied so injection
+        //         has the lookup ready to use.
+        LocalizationInjector.BuildLookupTable();
+
         if (_pendingPayload != null)
         {
             SoulLogger.Info(LOG_SOURCE,
