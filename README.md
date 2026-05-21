@@ -28,8 +28,12 @@ A modular V Rising mod suite
         HeartRegistry.cs - Tracks what modules are loaded
         ModuleInfo.cs - Data that holds info on Modules installed, versions, compatibility
     [Network] >
+        ServerEventPayload.cs
         ServerSyncPayload.cs - Data bundle that will be sent to the client to communicate with LilithsSoul
+        SyncPayloadCache.cs
+        SyncSender.cs
     [Patches] >
+        ClientConnectPatch.cs
         InitializationPatch.cs - Adds in our changes on startup through Harmony Patching
     [Prefabs] >
         [Definitions] >
@@ -45,17 +49,23 @@ A modular V Rising mod suite
         PrefabNameExporter.cs - Reads Names > *.json configs on startup to see what GUID has what configured name
     HeartPlugin.cs - ENTRY POINT, Does the initial loads of patches, logger, config, eventbus, registry
 
-[LilithsHeart] >
+[LilithsSoul] >
     [Config] >
-
+        SoulConfig.cs - Config File
+        SoulPaths.cs - Paths where files should go
     [Foundation] >
-
+        EntityExtensions.cs - Extensions to more easily interact with entities in code
+        Soul.cs
+        SoulLogger.cs - Logging tool for console messages
     [Network] >
-
+        ServerEventPayload.cs
+        ServerSyncPayload.cs
+        SyncReceiver.cs
     [Patches] >
-
+        ClientChatSystemPatch.cs
+        ClientInitPatch.cs
     [Services] > 
-
+        LocalizationInjector.cs
     SoulPlugin.cs
 
 
