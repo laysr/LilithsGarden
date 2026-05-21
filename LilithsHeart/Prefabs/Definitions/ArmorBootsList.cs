@@ -1,94 +1,272 @@
+// ============================================================
+//  ArmorBootsList — LilithsHeart
+//  LilithsHeart/Prefabs/Definitions/ArmorBootsList.cs
+//
+//  [CHANGED] Migrated from bare PrefabGUID fields to PrefabDef records.
+//            Field names match the prefab string exactly. Names sourced
+//            from original comments and [PrefabName] attributes where
+//            present. All nullable fields shown explicitly.
+//
+//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
+//                class load, zero per-frame cost. Stack-allocated structs,
+//                no heap pressure.
+// ============================================================
+
 using Stunlock.Core;
 
 namespace LilithsHeart.Prefabs.Definitions;
 
 public static class ArmorBootsList
 {
-// BONEGUARD BOOTS
-    public static readonly PrefabGUID Item_Boots_T01_Bone = new(711062517);
+    public static readonly PrefabDef Item_Boots_T01_Bone = new()
+    {
+        Name    = "BoneguardBoots",
+        Guid    = new(711062517),
+        Prefab  = "Item_Boots_T01_Bone",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// PLATED BONEGUARD BOOTS
-    public static readonly PrefabGUID Item_Boots_T02_BoneReinforced = new(1241831522);
+    public static readonly PrefabDef Item_Boots_T02_BoneReinforced = new()
+    {
+        Name    = "PlatedBoneguardBoots",
+        Guid    = new(1241831522),
+        Prefab  = "Item_Boots_T02_BoneReinforced",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// NIGHTSTALKER BOOTS
-    public static readonly PrefabGUID Item_Boots_T03_Cloth = new(-1354920908);
+    public static readonly PrefabDef Item_Boots_T03_Cloth = new()
+    {
+        Name    = "NightstalkerBoots",
+        Guid    = new(-1354920908),
+        Prefab  = "Item_Boots_T03_Cloth",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// MARAUDER BOOTS
-    public static readonly PrefabGUID Item_Boots_T04_Copper_Brute = new(-1359494169);
+    public static readonly PrefabDef Item_Boots_T04_Copper_Brute = new()
+    {
+        Name    = "MarauderBoots",
+        Guid    = new(-1359494169),
+        Prefab  = "Item_Boots_T04_Copper_Brute",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SHADEWALKER BOOTS
-    public static readonly PrefabGUID Item_Boots_T04_Copper_Rogue = new(1101206623);
+    public static readonly PrefabDef Item_Boots_T04_Copper_Rogue = new()
+    {
+        Name    = "ShadewalkerBoots",
+        Guid    = new(1101206623),
+        Prefab  = "Item_Boots_T04_Copper_Rogue",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// WARLOCK BOOTS
-    public static readonly PrefabGUID Item_Boots_T04_Copper_Scholar = new(1204352435);
+    public static readonly PrefabDef Item_Boots_T04_Copper_Scholar = new()
+    {
+        Name    = "WarlockBoots",
+        Guid    = new(1204352435),
+        Prefab  = "Item_Boots_T04_Copper_Scholar",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// GRIM RANGER BOOTS
-    public static readonly PrefabGUID Item_Boots_T04_Copper_Warrior = new(-15390086);
+    public static readonly PrefabDef Item_Boots_T04_Copper_Warrior = new()
+    {
+        Name    = "GrimRangerBoots",
+        Guid    = new(-15390086),
+        Prefab  = "Item_Boots_T04_Copper_Warrior",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// HOLLOWFANG BOOTS
-    public static readonly PrefabGUID Item_Boots_T05_Cotton = new(-1837769884);
+    public static readonly PrefabDef Item_Boots_T05_Cotton = new()
+    {
+        Name    = "HollowfangBoots",
+        Guid    = new(-1837769884),
+        Prefab  = "Item_Boots_T05_Cotton",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// CRIMSON TEMPLAR BOOTS
-    public static readonly PrefabGUID Item_Boots_T06_Iron_Brute = new(-1329744719);
+    public static readonly PrefabDef Item_Boots_T06_Iron_Brute = new()
+    {
+        Name    = "CrimsonTemplarBoots",
+        Guid    = new(-1329744719),
+        Prefab  = "Item_Boots_T06_Iron_Brute",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DUSKWATCHER BOOTS
-    public static readonly PrefabGUID Item_Boots_T06_Iron_Rogue = new(51576788);
+    public static readonly PrefabDef Item_Boots_T06_Iron_Rogue = new()
+    {
+        Name    = "DuskwatcherBoots",
+        Guid    = new(51576788),
+        Prefab  = "Item_Boots_T06_Iron_Rogue",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DARK MAGUS BOOTS
-    public static readonly PrefabGUID Item_Boots_T06_Iron_Scholar = new(138060378);
+    public static readonly PrefabDef Item_Boots_T06_Iron_Scholar = new()
+    {
+        Name    = "DarkMagusBoots",
+        Guid    = new(138060378),
+        Prefab  = "Item_Boots_T06_Iron_Scholar",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// BLOOD HUNTER BOOTS
-    public static readonly PrefabGUID Item_Boots_T06_Iron_Warrior = new(666433583);
+    public static readonly PrefabDef Item_Boots_T06_Iron_Warrior = new()
+    {
+        Name    = "BloodHunterBoots",
+        Guid    = new(666433583),
+        Prefab  = "Item_Boots_T06_Iron_Warrior",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DAWNTHORN BOOTS
-    public static readonly PrefabGUID Item_Boots_T07_Silk = new(560446510);
+    public static readonly PrefabDef Item_Boots_T07_Silk = new()
+    {
+        Name    = "DawnthorneBoots",
+        Guid    = new(560446510),
+        Prefab  = "Item_Boots_T07_Silk",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// GRIM KNIGHT BOOTS
-    public static readonly PrefabGUID Item_Boots_T08_DarkSilver_Brute = new(-1023762087);
+    public static readonly PrefabDef Item_Boots_T08_DarkSilver_Brute = new()
+    {
+        Name    = "GrimKnightBoots",
+        Guid    = new(-1023762087),
+        Prefab  = "Item_Boots_T08_DarkSilver_Brute",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SHADOWMOON BOOTS
-    public static readonly PrefabGUID Item_Boots_T08_DarkSilver_Rogue = new(-1921018689);
+    public static readonly PrefabDef Item_Boots_T08_DarkSilver_Rogue = new()
+    {
+        Name    = "ShadowmoonBoots",
+        Guid    = new(-1921018689),
+        Prefab  = "Item_Boots_T08_DarkSilver_Rogue",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// MALEFICER SCHOLAR BOOTS
-    public static readonly PrefabGUID Item_Boots_T08_DarkSilver_Scholar = new(1469185034);
+    public static readonly PrefabDef Item_Boots_T08_DarkSilver_Scholar = new()
+    {
+        Name    = "MaleficerScholarBoots",
+        Guid    = new(1469185034),
+        Prefab  = "Item_Boots_T08_DarkSilver_Scholar",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DREAD PLATE BOOTS
-    public static readonly PrefabGUID Item_Boots_T08_DarkSilver_Warrior = new(1395895315);
+    public static readonly PrefabDef Item_Boots_T08_DarkSilver_Warrior = new()
+    {
+        Name    = "DreadPlateBoots",
+        Guid    = new(1395895315),
+        Prefab  = "Item_Boots_T08_DarkSilver_Warrior",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DRACULA'S BOOTS
-    [PrefabName("DraculasBoots")]
-    public static readonly PrefabGUID Item_Boots_T09_Dracula = new(1400688919);
+    // ── Dracula Set ───────────────────────────────────────────────────────────
 
-// DRACULA'S GRIM BOOTS
-    [PrefabName("DraculasGrimBoots")]
-    public static readonly PrefabGUID Item_Boots_T09_Dracula_Brute = new(1646489863);
+    public static readonly PrefabDef Item_Boots_T09_Dracula = new()
+    {
+        Name    = "DraculasBoots",
+        Guid    = new(1400688919),
+        Prefab  = "Item_Boots_T09_Dracula",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DRACULA'S SHADOW BOOTS
-    [PrefabName("DraculasShadowBoots")]
-    public static readonly PrefabGUID Item_Boots_T09_Dracula_Rogue = new(1855323424);
+    public static readonly PrefabDef Item_Boots_T09_Dracula_Brute = new()
+    {
+        Name    = "DraculasGrimBoots",
+        Guid    = new(1646489863),
+        Prefab  = "Item_Boots_T09_Dracula_Brute",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DRACULA'S MALEFICER BOOTS
-    [PrefabName("DraculasMaleficerBoots")]
-    public static readonly PrefabGUID Item_Boots_T09_Dracula_Scholar = new(1531721602);
+    public static readonly PrefabDef Item_Boots_T09_Dracula_Rogue = new()
+    {
+        Name    = "DraculasShadowBoots",
+        Guid    = new(1855323424),
+        Prefab  = "Item_Boots_T09_Dracula_Rogue",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DRACULA'S DREAD BOOTS
-    [PrefabName("DraculasDreadBoots")]
-    public static readonly PrefabGUID Item_Boots_T09_Dracula_Warrior = new(-382349289);
+    public static readonly PrefabDef Item_Boots_T09_Dracula_Scholar = new()
+    {
+        Name    = "DraculasMaleficerBoots",
+        Guid    = new(1531721602),
+        Prefab  = "Item_Boots_T09_Dracula_Scholar",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// DLC BOOTS
-// ALUCARD'S BOOTS - DLC LEGACY OF CASTLEVANIA
-    [PrefabName("AlucardBoots")]
-    public static readonly PrefabGUID Item_Boots_T0X_PMK01 = new(-1214309698);
+    public static readonly PrefabDef Item_Boots_T09_Dracula_Warrior = new()
+    {
+        Name    = "DraculasDreadBoots",
+        Guid    = new(-382349289),
+        Prefab  = "Item_Boots_T09_Dracula_Warrior",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SOMA CRUZ'S BOOTS - DLC LEGACY OF CASTLEVANIA
-    [PrefabName("SomaCruzsBoots")]
-    public static readonly PrefabGUID Item_Boots_T0X_PMK03 = new(-14368032);
+    // ── DLC ───────────────────────────────────────────────────────────────────
 
-// OPULENT NIGHT SABATONS - DLC ETERNAL DOMINANCE PACK
-    [PrefabName("OpulentNightSabatons")]
-    public static readonly PrefabGUID Item_Boots_T0X_BlackfangSultan = new(540608060);
+    // DLC: Legacy of Castlevania
+    public static readonly PrefabDef Item_Boots_T0X_PMK01 = new()
+    {
+        Name    = "AlucardBoots",
+        Guid    = new(-1214309698),
+        Prefab  = "Item_Boots_T0X_PMK01",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// UNUSED BOOTS
-    public static readonly PrefabGUID Item_Boots_T00_StartingRags = new(-2137364987);
-    public static readonly PrefabGUID Item_Boots_T0X_VampireKnight = new(830032282);
+    // DLC: Legacy of Castlevania
+    public static readonly PrefabDef Item_Boots_T0X_PMK03 = new()
+    {
+        Name    = "SomaCruzsBoots",
+        Guid    = new(-14368032),
+        Prefab  = "Item_Boots_T0X_PMK03",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    // DLC: Eternal Dominance Pack
+    public static readonly PrefabDef Item_Boots_T0X_BlackfangSultan = new()
+    {
+        Name    = "OpulentNightSabatons",
+        Guid    = new(540608060),
+        Prefab  = "Item_Boots_T0X_BlackfangSultan",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    // ── Unused ────────────────────────────────────────────────────────────────
+
+    public static readonly PrefabDef Item_Boots_T00_StartingRags = new()
+    {
+        Name    = null,
+        Guid    = new(-2137364987),
+        Prefab  = "Item_Boots_T00_StartingRags",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef Item_Boots_T0X_VampireKnight = new()
+    {
+        Name    = null,
+        Guid    = new(830032282),
+        Prefab  = "Item_Boots_T0X_VampireKnight",
+        NameKey = null,
+        DescKey = null,
+    };
 }
