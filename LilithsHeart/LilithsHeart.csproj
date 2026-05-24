@@ -8,13 +8,18 @@
     <OutputPath>D:\My Programs\V Rising Dedicated Server Launcher\DedicatedServerLauncher\VRisingServer\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-<ItemGroup>
-  <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
-</ItemGroup>
-<ItemGroup>
-  <!-- Server-side V Rising assemblies. VampireCommandFramework is a server
-       framework — Heart uses it as its BepInDependency anchor. -->
-  <PackageReference Include="VampireReferenceAssemblies" Version="1.1.12-r99041-b2" />
-  <PackageReference Include="VRising.VampireCommandFramework" Version="0.10.4" />
-</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Server-side V Rising assemblies.
+      VampireReferenceAssemblies exposes all server ProjectM types
+      (EntityManager, PrefabCollectionSystem, GameDataSystem, etc.).
+      VampireCommandFramework is declared as a BepInDependency in HeartPlugin
+      and must be resolvable at compile time.
+    -->
+    <PackageReference Include="VampireReferenceAssemblies" Version="1.1.12-r99041-b2" />
+    <PackageReference Include="VRising.VampireCommandFramework" Version="0.10.4" />
+  </ItemGroup>
 </Project>

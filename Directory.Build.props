@@ -17,8 +17,16 @@
     </RestoreSources>
   </PropertyGroup>
 
-<ItemGroup>
-  <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-  <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.733" IncludeAssets="compile" />
-</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.733" IncludeAssets="compile" />
+    <!--
+      V Rising assembly references are intentionally absent here.
+      Each project declares exactly what it needs:
+        LilithsHeart    — VampireReferenceAssemblies + VampireCommandFramework (server)
+        LilithsCookbook — VampireReferenceAssemblies + VampireCommandFramework (server)
+        LilithsSoul     — VRising.Unhollowed.Client (client, no VCF)
+        LilithsMind     — none (pure C#, no game dependencies)
+    -->
+  </ItemGroup>
 </Project>

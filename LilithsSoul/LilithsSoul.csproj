@@ -12,14 +12,18 @@
     <OutputPath>D:\Steam\steamapps\common\VRising\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-<ItemGroup>
-  <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
-</ItemGroup>
-<ItemGroup>
-  <!-- Client-side V Rising assemblies. Unhollowed.Client exposes
-       ClientChatSystem, GameDataManager, PrefabCollectionSystem
-       and all other client-accessible types Soul needs. -->
-  <PackageReference Include="VRising.Unhollowed.Client" Version="1.1.9.9219901" />
-  <PackageReference Include="VRising.VampireCommandFramework" Version="0.10.4" />
-</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Client-side V Rising assemblies only.
+      VRising.Unhollowed.Client exposes all client-accessible types Soul needs:
+      ClientChatSystem (ProjectM.UI), GameDataManager, PrefabCollectionSystem,
+      ChatMessageServerEvent, NetworkId, and Stunlock.Localization.
+      VampireCommandFramework is intentionally excluded — commands are a
+      server-side concern handled by LilithsHeart. Soul has no need for VCF.
+    -->
+    <PackageReference Include="VRising.Unhollowed.Client" Version="1.1.9.9219901" />
+  </ItemGroup>
 </Project>
