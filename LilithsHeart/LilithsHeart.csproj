@@ -8,4 +8,7 @@
     <OutputPath>D:\My Programs\V Rising Dedicated Server Launcher\DedicatedServerLauncher\VRisingServer\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
+  </ItemGroup>
 </Project>

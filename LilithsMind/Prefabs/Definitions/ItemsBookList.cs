@@ -1,24 +1,3 @@
-// ============================================================
-//  ItemsBookList — Part 1 of 3 — LilithsHeart
-//  LilithsHeart/Prefabs/Definitions/ItemsBookList.cs
-//
-//  [CHANGED] Migrated from bare PrefabGUID fields to PrefabDef records.
-//            Field names match the prefab string exactly. No comments or
-//            [PrefabName] attributes were present in the source — Name is
-//            null throughout until looked up from game data.
-//            All nullable fields shown explicitly.
-//
-//  Parts: 1 — Armor Books (Boots, Chest, Gloves, Legs)
-//         2 — Consumable, Floor, MagicSource, Structure Books
-//         3 — Weapon Books, Passive T01 & T02
-//
-//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
-//                class load, zero per-frame cost. Stack-allocated structs,
-//                no heap pressure.
-// ============================================================
-
-using Stunlock.Core;
-
 namespace LilithsMind.Prefabs.Definitions;
 
 public static partial class ItemsBookList

@@ -1,5 +1,3 @@
-using Stunlock.Core;
-
 namespace LilithsMind.Prefabs.Definitions;
 
 public static class ArmorBootsList

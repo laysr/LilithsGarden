@@ -1,19 +1,3 @@
-// ============================================================
-//  RecipesEquipmentList — LilithsHeart
-//  LilithsHeart/Prefabs/Definitions/RecipesEquipmentList.cs
-//
-//  [CHANGED] Migrated from bare PrefabGUID fields to PrefabDef records.
-//            Field names match the prefab string exactly. No comments or
-//            [PrefabName] attributes were present — Name is null throughout
-//            until looked up from game data. All nullable fields shown explicitly.
-//
-//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
-//                class load, zero per-frame cost. Stack-allocated structs,
-//                no heap pressure.
-// ============================================================
-
-using Stunlock.Core;
-
 namespace LilithsMind.Prefabs.Definitions;
 
 public static class RecipesEquipmentList

@@ -1,23 +1,3 @@
-// ============================================================
-//  WeaponsList — Part 1 of 2 — LilithsHeart
-//  LilithsHeart/Prefabs/Definitions/WeaponsList.cs
-//
-//  [CHANGED] Migrated from bare PrefabGUID + [PrefabName] attribute fields
-//            to PrefabDef records. Field names match the prefab string exactly.
-//            Names sourced from [PrefabName] attributes; null where absent
-//            (misc/shattered/template variants). All nullable fields shown explicitly.
-//
-//  Parts: 1 — Swords, Axes, Maces, Spears, Reapers, Slashers
-//         2 — Crossbows, Longbows, Claws, Daggers, Greatswords,
-//             Pistols, Twinblades, Whips, Fishing Poles
-//
-//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
-//                class load, zero per-frame cost. Stack-allocated structs,
-//                no heap pressure.
-// ============================================================
-
-using Stunlock.Core;
-
 namespace LilithsMind.Prefabs.Definitions;
 
 public static partial class WeaponsList

@@ -1,22 +1,3 @@
-// ============================================================
-//  RecipesJewelList — Part 1 of 2 — LilithsHeart
-//  LilithsHeart/Prefabs/Definitions/RecipesJewelList.cs
-//
-//  [CHANGED] Migrated from bare PrefabGUID fields to PrefabDef records.
-//            Field names match the prefab string exactly. No comments or
-//            [PrefabName] attributes were present — Name is null throughout
-//            until looked up from game data. All nullable fields shown explicitly.
-//
-//  Parts: 1 — Blood, Chaos, Frost jewel recipes
-//         2 — Illusion, Storm, Unholy jewel recipes
-//
-//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
-//                class load, zero per-frame cost. Stack-allocated structs,
-//                no heap pressure.
-// ============================================================
-
-using Stunlock.Core;
-
 namespace LilithsMind.Prefabs.Definitions;
 
 public static partial class RecipesJewelList

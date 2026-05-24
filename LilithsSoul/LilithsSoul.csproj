@@ -12,4 +12,7 @@
     <OutputPath>D:\Steam\steamapps\common\VRising\BepInEx\plugins</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilithsMind\LilithsMind.csproj" />
+  </ItemGroup>
 </Project>

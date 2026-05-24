@@ -50,8 +50,7 @@ public static class Heart
         if (_initialized) return;
 
         HeartLogger.Info(LOG_SOURCE, "Heart initializing...");
-
-        PrefabNameExporter.Export();
+        
         PrefabNameResolver.Initialize();
         LocalizationConfig.Initialize();
 

@@ -1,170 +1,379 @@
-using Stunlock.Core;
+// ============================================================
+//  StationsList — LilithsMind
+//  LilithsMind/Prefabs/Definitions/StationsList.cs
+//
+//  [CHANGED] Migrated from bare PrefabGUID + [PrefabName] attribute fields
+//            to PrefabDef records. Field names match the prefab string exactly.
+//            Names sourced from [PrefabName] attributes; null where absent
+//            (special/unused stations). All nullable fields shown explicitly.
+//
+//  [PERFORMANCE] Static readonly PrefabDef fields — initialised once at
+//                class load, zero per-frame cost. Stack-allocated structs,
+//                no heap pressure.
+// ============================================================
 
 namespace LilithsMind.Prefabs.Definitions;
 
 public static class StationsList
 {
+    // ── Crafting Stations ─────────────────────────────────────────────────────
 
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-/// CRAFTING STATIONS
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
+    public static readonly PrefabDef TM_CraftingStation_SimpleCraftingBench = new()
+    {
+        Name    = "SimpleWorkbench",
+        GuidHash = -1107784271,
+        Prefab  = "TM_CraftingStation_SimpleCraftingBench",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SIMPLE WORKBENCH
-    [PrefabName("SimpleWorkbench")]
-    public static readonly PrefabGUID TM_CraftingStation_SimpleCraftingBench = new(-1107784271);
+    public static readonly PrefabDef TM_CraftingStation_WoodworkingBench = new()
+    {
+        Name    = "WoodworkingBench",
+        GuidHash = -332123372,
+        Prefab  = "TM_CraftingStation_WoodworkingBench",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// WOODWORKING BENCH
-    [PrefabName("WoodworkingBench")]
-    public static readonly PrefabGUID TM_CraftingStation_WoodworkingBench = new(-332123372);
+    public static readonly PrefabDef TM_CraftingStation_Leatherworking = new()
+    {
+        Name    = "LeatherworkingStation",
+        GuidHash = 1779320855,
+        Prefab  = "TM_CraftingStation_Leatherworking",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// LEATHERWORKING STATION
-    [PrefabName("LeatherworkingStation")]
-    public static readonly PrefabGUID TM_CraftingStation_Leatherworking = new(1779320855);
+    public static readonly PrefabDef TM_CraftingStation_ArtisanTable = new()
+    {
+        Name    = "ArtisanTable",
+        GuidHash = -1718710437,
+        Prefab  = "TM_CraftingStation_ArtisanTable",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ARTISAN TABLE
-    [PrefabName("ArtisanTable")]
-    public static readonly PrefabGUID TM_CraftingStation_ArtisanTable = new(-1718710437);
+    public static readonly PrefabDef TM_CraftingStation_JewelcraftingTable = new()
+    {
+        Name    = "JewelcraftingTable",
+        GuidHash = 508953830,
+        Prefab  = "TM_CraftingStation_JewelcraftingTable",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// JEWELCRAFTING TABLE
-    [PrefabName("JewelcraftingTable")]
-    public static readonly PrefabGUID TM_CraftingStation_JewelcraftingTable = new(508953830);
+    public static readonly PrefabDef TM_CraftingStation_TailorBench = new()
+    {
+        Name    = "TailoringBench",
+        GuidHash = -952755594,
+        Prefab  = "TM_CraftingStation_TailorBench",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// TAILORING BENCH
-    [PrefabName("TailoringBench")]
-    public static readonly PrefabGUID TM_CraftingStation_TailorBench = new(-952755594);
+    public static readonly PrefabDef TM_CraftingStation_AlchemyLab_Small = new()
+    {
+        Name    = "AlchemyTable",
+        GuidHash = 181938440,
+        Prefab  = "TM_CraftingStation_AlchemyLab_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ALCHEMY TABLE
-    [PrefabName("AlchemyTable")]
-    public static readonly PrefabGUID TM_CraftingStation_AlchemyLab_Small = new(181938440);
+    public static readonly PrefabDef TM_CraftingStation_Smithy = new()
+    {
+        Name    = "Smithy",
+        GuidHash = -1840926436,
+        Prefab  = "TM_CraftingStation_Smithy",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SMITHY
-    [PrefabName("Smithy")]
-    public static readonly PrefabGUID TM_CraftingStation_Smithy = new(-1840926436);
+    public static readonly PrefabDef TM_CraftingStation_Anvil = new()
+    {
+        Name    = "Anvil",
+        GuidHash = -437790980,
+        Prefab  = "TM_CraftingStation_Anvil",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ANVIL
-    [PrefabName("Anvil")]
-    public static readonly PrefabGUID TM_CraftingStation_Anvil = new(-437790980);
+    // ── Refinement Stations ───────────────────────────────────────────────────
 
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-/// REFINEMENT STATIONS
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
+    public static readonly PrefabDef TM_RefinementStation_Sawmill_Small = new()
+    {
+        Name    = "Sawmill",
+        GuidHash = 1094077710,
+        Prefab  = "TM_RefinementStation_Sawmill_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// SAWMILL
-    [PrefabName("Sawmill")]
-    public static readonly PrefabGUID TM_RefinementStation_Sawmill_Small = new(1094077710);
+    public static readonly PrefabDef TM_RefinementStation_Sawmill_Large = new()
+    {
+        Name    = "AdvancedSawmill",
+        GuidHash = -163562336,
+        Prefab  = "TM_RefinementStation_Sawmill_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED SAWMILL
-    [PrefabName("AdvancedSawmill")]
-    public static readonly PrefabGUID TM_RefinementStation_Sawmill_Large = new(-163562336);
+    public static readonly PrefabDef TM_RefinementStation_StonecuttingTable_Small = new()
+    {
+        Name    = "Grinder",
+        GuidHash = -600683642,
+        Prefab  = "TM_RefinementStation_StonecuttingTable_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// GRINDER
-    [PrefabName("Grinder")]
-    public static readonly PrefabGUID TM_RefinementStation_StonecuttingTable_Small = new(-600683642);
+    public static readonly PrefabDef TM_RefinementStation_StonecuttingTable_Large = new()
+    {
+        Name    = "AdvancedGrinder",
+        GuidHash = -178579946,
+        Prefab  = "TM_RefinementStation_StonecuttingTable_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED GRINDER
-    [PrefabName("AdvancedGrinder")]
-    public static readonly PrefabGUID TM_RefinementStation_StonecuttingTable_Large = new(-178579946);
+    public static readonly PrefabDef TM_RefinementStation_Furnace_Small = new()
+    {
+        Name    = "Furnace",
+        GuidHash = -1150411622,
+        Prefab  = "TM_RefinementStation_Furnace_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// FURNACE
-    [PrefabName("Furnace")]
-    public static readonly PrefabGUID TM_RefinementStation_Furnace_Small = new(-1150411622);
+    public static readonly PrefabDef TM_RefinementStation_Furnace_Large = new()
+    {
+        Name    = "AdvancedFurnace",
+        GuidHash = -222851985,
+        Prefab  = "TM_RefinementStation_Furnace_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED FURNACE
-    [PrefabName("AdvancedFurnace")]
-    public static readonly PrefabGUID TM_RefinementStation_Furnace_Large = new(-222851985);
+    public static readonly PrefabDef TM_RefinementStation_BloodPress_Small = new()
+    {
+        Name    = "BloodPress",
+        GuidHash = -300823465,
+        Prefab  = "TM_RefinementStation_BloodPress_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// BLOOD PRESS
-    [PrefabName("BloodPress")]
-    public static readonly PrefabGUID TM_RefinementStation_BloodPress_Small = new(-300823465);
+    public static readonly PrefabDef TM_RefinementStation_BloodPress_Large = new()
+    {
+        Name    = "AdvancedBloodPress",
+        GuidHash = -684391635,
+        Prefab  = "TM_RefinementStation_BloodPress_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED BLOOD PRESS
-    [PrefabName("AdvancedBloodPress")]
-    public static readonly PrefabGUID TM_RefinementStation_BloodPress_Large = new(-684391635);
+    public static readonly PrefabDef TM_RefinementStation_Tannery_Small = new()
+    {
+        Name    = "Tannery",
+        GuidHash = -635885386,
+        Prefab  = "TM_RefinementStation_Tannery_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// TANNERY
-    [PrefabName("Tannery")]
-    public static readonly PrefabGUID TM_RefinementStation_Tannery_Small = new(-635885386);
+    public static readonly PrefabDef TM_RefinementStation_Tannery_Large = new()
+    {
+        Name    = "AdvancedTannery",
+        GuidHash = -1422196107,
+        Prefab  = "TM_RefinementStation_Tannery_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED TANNERY
-    [PrefabName("AdvancedTannery")]
-    public static readonly PrefabGUID TM_RefinementStation_Tannery_Large = new(-1422196107);
+    public static readonly PrefabDef TM_RefinementStation_Loom_Small = new()
+    {
+        Name    = "Loom",
+        GuidHash = -16328955,
+        Prefab  = "TM_RefinementStation_Loom_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// LOOM
-    [PrefabName("Loom")]
-    public static readonly PrefabGUID TM_RefinementStation_Loom_Small = new(-16328955);
+    public static readonly PrefabDef TM_RefinementStation_Loom_Large = new()
+    {
+        Name    = "AdvancedLoom",
+        GuidHash = 1299929048,
+        Prefab  = "TM_RefinementStation_Loom_Large",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ADVANCED LOOM
-    [PrefabName("AdvancedLoom")]
-    public static readonly PrefabGUID TM_RefinementStation_Loom_Large = new(1299929048);
+    public static readonly PrefabDef TM_RefinementStation_PaperPress_Small = new()
+    {
+        Name    = "PaperPress",
+        GuidHash = -1628971842,
+        Prefab  = "TM_RefinementStation_PaperPress_Small",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// PAPER PRESS
-    [PrefabName("PaperPress")]
-    public static readonly PrefabGUID TM_RefinementStation_PaperPress_Small = new(-1628971842);
+    public static readonly PrefabDef TM_RefinementStation_GemCutting = new()
+    {
+        Name    = "GemCuttingTable",
+        GuidHash = -21483617,
+        Prefab  = "TM_RefinementStation_GemCutting",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// GEM CUTTING TABLE
-    [PrefabName("GemCuttingTable")]
-    public static readonly PrefabGUID TM_RefinementStation_GemCutting = new(-21483617);
+    public static readonly PrefabDef TM_RefinementStation_Fabricator = new()
+    {
+        Name    = "Fabricator",
+        GuidHash = -465055967,
+        Prefab  = "TM_RefinementStation_Fabricator",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// FABRICATOR
-    [PrefabName("Fabricator")]
-    public static readonly PrefabGUID TM_RefinementStation_Fabricator = new(-465055967);
+    public static readonly PrefabDef TM_SalvageStation_Table = new()
+    {
+        Name    = "Devourer",
+        GuidHash = -1719849142,
+        Prefab  = "TM_SalvageStation_Table",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// THE DEVOURER
-    [PrefabName("Devourer")]
-    public static readonly PrefabGUID TM_SalvageStation_Table = new(-1719849142);
+    // ── Unit Stations ─────────────────────────────────────────────────────────
 
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-/// UNIT STATIONS
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
+    public static readonly PrefabDef TM_UnitStation_VerminNest = new()
+    {
+        Name    = "VerminNest",
+        GuidHash = 150776081,
+        Prefab  = "TM_UnitStation_VerminNest",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// VERMIN NEST
-    [PrefabName("VerminNest")]
-    public static readonly PrefabGUID TM_UnitStation_VerminNest = new(150776081);
+    public static readonly PrefabDef TM_UnitStation_Tomb = new()
+    {
+        Name    = "Tomb",
+        GuidHash = 1127059420,
+        Prefab  = "TM_UnitStation_Tomb",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// TOMB
-    [PrefabName("Tomb")]
-    public static readonly PrefabGUID TM_UnitStation_Tomb = new(1127059420);
+    public static readonly PrefabDef TM_UnitStation_NetherGate = new()
+    {
+        Name    = "StygianSummoningCircle",
+        GuidHash = -218354895,
+        Prefab  = "TM_UnitStation_NetherGate",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// STYGIAN SUMMONING CIRCLE
-    [PrefabName("StygianSummoningCircle")]
-    public static readonly PrefabGUID TM_UnitStation_NetherGate = new(-218354895);
+    // ── Special Stations — Do Not Use ─────────────────────────────────────────
 
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-/// SPECIAL STATIONS - DONT USE
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
+    public static readonly PrefabDef TM_CraftingStation_AncestralForge = new()
+    {
+        Name    = null,
+        GuidHash = 48521126,
+        Prefab  = "TM_CraftingStation_AncestralForge",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// ANCESTRAL FORGE
-    public static readonly PrefabGUID TM_CraftingStation_AncestralForge = new(48521126);
+    public static readonly PrefabDef TM_CraftingStation_BloodMixer = new()
+    {
+        Name    = null,
+        GuidHash = -969931747,
+        Prefab  = "TM_CraftingStation_BloodMixer",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// BLOOD HOMOGENIZER
-    public static readonly PrefabGUID TM_CraftingStation_BloodMixer = new(-969931747);
+    public static readonly PrefabDef TM_CraftingStation_FusionForge = new()
+    {
+        Name    = null,
+        GuidHash = -1286344051,
+        Prefab  = "TM_CraftingStation_FusionForge",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// FUSION FORGE
-    public static readonly PrefabGUID TM_CraftingStation_FusionForge = new(-1286344051);
+    public static readonly PrefabDef TM_CraftingStation_Stables = new()
+    {
+        Name    = null,
+        GuidHash = 472278220,
+        Prefab  = "TM_CraftingStation_Stables",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// STABLES
-    public static readonly PrefabGUID TM_CraftingStation_Stables = new(472278220);
+    public static readonly PrefabDef TM_RefinementStation_TeslaLightningRod = new()
+    {
+        Name    = null,
+        GuidHash = 1311814093,
+        Prefab  = "TM_RefinementStation_TeslaLightningRod",
+        NameKey = null,
+        DescKey = null,
+    };
 
-// TESLA LIGHTNING ROD
-    public static readonly PrefabGUID TM_RefinementStation_TeslaLightningRod = new(1311814093);
+    // ── Unused — Do Not Use ───────────────────────────────────────────────────
 
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-/// UNUSED - DONT USE
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-    public static readonly PrefabGUID TM_CraftingStation_Altar_Frost = new(-609878016);
-    public static readonly PrefabGUID TM_CraftingStation_Altar_Spectral = new(-64110296);
-    public static readonly PrefabGUID TM_CraftingStation_Altar_Unholy = new(-676962218);
-    public static readonly PrefabGUID TM_CraftingStation_ArtisansCorner = new(1121480632);
-    public static readonly PrefabGUID TM_CraftingStation_BloodBank = new(-452732692);
-    public static readonly PrefabGUID TM_CraftingStation_MetalworkStation = new(2014944075);
+    public static readonly PrefabDef TM_CraftingStation_Altar_Frost = new()
+    {
+        Name    = null,
+        GuidHash = -609878016,
+        Prefab  = "TM_CraftingStation_Altar_Frost",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef TM_CraftingStation_Altar_Spectral = new()
+    {
+        Name    = null,
+        GuidHash = -64110296,
+        Prefab  = "TM_CraftingStation_Altar_Spectral",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef TM_CraftingStation_Altar_Unholy = new()
+    {
+        Name    = null,
+        GuidHash = -676962218,
+        Prefab  = "TM_CraftingStation_Altar_Unholy",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef TM_CraftingStation_ArtisansCorner = new()
+    {
+        Name    = null,
+        GuidHash = 1121480632,
+        Prefab  = "TM_CraftingStation_ArtisansCorner",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef TM_CraftingStation_BloodBank = new()
+    {
+        Name    = null,
+        GuidHash = -452732692,
+        Prefab  = "TM_CraftingStation_BloodBank",
+        NameKey = null,
+        DescKey = null,
+    };
+
+    public static readonly PrefabDef TM_CraftingStation_MetalworkStation = new()
+    {
+        Name    = null,
+        GuidHash = 2014944075,
+        Prefab  = "TM_CraftingStation_MetalworkStation",
+        NameKey = null,
+        DescKey = null,
+    };
 }
