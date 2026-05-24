@@ -7,36 +7,10 @@ using LilithsHeart.Prefabs.Definitions;
 
 namespace LilithsHeart.Prefabs;
 
-/// <summary>
-/// Generates and maintains the LilithsHeart/Names/*.json files by reflecting over
-/// all static prefab definition classes in the LilithsHeart.Prefabs.Definitions namespace.
-///
-/// [CHANGED] Renamed from PrefabNamesExporter → PrefabNameExporter (singular).
-///           Moved from Systems/ → Prefabs/ alongside PrefabNameResolver.
-///           Namespace updated: LilithsHeart.Systems → LilithsHeart.Prefabs.
-///           Definitions namespace updated: LilithsHeart.Resources.Prefabs → LilithsHeart.Prefabs.Definitions.
-///
-/// Design — merge strategy:
-///   - On every boot, each registry class is reflected and a fresh entry set is built.
-///   - If a JSON file already exists, it is read first and any existing NewName values
-///     are carried forward into the merged result. Only NewName is preserved from disk;
-///     OriginalName is always authoritative from the code.
-///   - New registry entries added to the C# classes are automatically added to the file.
-///   - Removed registry entries are dropped from the file (no orphaned GUIDs).
-///   - This means the file is always in sync with the code while admin NewName aliases
-///     are never lost.
-///   - Called from Heart.OnInitialize() before PrefabNameResolver.Initialize() so
-///     the files are ready to be consumed in the same boot cycle.
-///
-/// [PERFORMANCE] Reflection runs once at startup; zero cost after initialization.
-///               One file read + one file write per registry class per boot.
-///               These are small JSON files — I/O cost is negligible vs world load time.
-/// </summary>
 public static class PrefabNameExporter
 {
     private const string LOG_SOURCE = "LilithsHeart.PrefabNameExporter";
 
-    // [CHANGED] Namespace string updated to match renamed Prefabs/Definitions folder.
     private const string PrefabNamespace = "LilithsHeart.Prefabs.Definitions";
 
     private static readonly string OutputDir = HeartPaths.NamesDir;
@@ -52,7 +26,7 @@ public static class PrefabNameExporter
     };
 
     /// <summary>
-    /// Scans all prefab registry classes in Prefabs/Registry/ and writes a merged
+    /// Scans all prefab definition classes in Prefabs/Definitions/ and writes a merged
     /// JSON file for each one. Existing NewName values on disk are preserved.
     /// </summary>
     public static void Export()
@@ -60,8 +34,8 @@ public static class PrefabNameExporter
         Directory.CreateDirectory(OutputDir);
 
         // Reflect over the executing assembly to find all static classes in the
-        // prefab registry namespace. This includes all registry classes automatically —
-        // no manual registration needed when new registry classes are added.
+        // prefab definitions namespace. This includes all definition classes automatically —
+        // no manual registration needed when new definition classes are added.
         var registryTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t =>
@@ -73,7 +47,7 @@ public static class PrefabNameExporter
 
         if (registryTypes.Count == 0)
         {
-            HeartLogger.Warning(LOG_SOURCE, "No prefab registry classes found. Nothing to export.");
+            HeartLogger.Warning(LOG_SOURCE, "No prefab definition classes found. Nothing to export.");
             return;
         }
 
@@ -90,7 +64,7 @@ public static class PrefabNameExporter
 
             if (freshEntries.Count == 0)
             {
-                HeartLogger.Warning(LOG_SOURCE, $"'{type.Name}' has no PrefabGUID fields — skipping.");
+                HeartLogger.Warning(LOG_SOURCE, $"'{type.Name}' has no PrefabDef fields — skipping.");
                 continue;
             }
 
@@ -164,28 +138,38 @@ public static class PrefabNameExporter
     }
 
     /// <summary>
-    /// Reflects over all public static PrefabGUID fields on the given type and
+    /// Reflects over all public static PrefabDef fields on the given type and
     /// builds a dictionary keyed by GUID hash (as string) for JSON serialization.
-    /// OriginalName is the C# field name.
-    /// NewName is read from [PrefabName("...")] if present, otherwise left empty.
+    ///
+    /// [CHANGED] Previously reflected over PrefabGUID fields and read [PrefabName]
+    /// attributes for the display name. PrefabDef now carries Name directly as a
+    /// struct field, so attribute reflection is no longer needed. Reading a struct
+    /// field is cheaper than GetCustomAttributes() — no allocations, no attribute
+    /// scanning. PrefabNameAttribute.cs can be deleted.
+    ///
+    /// OriginalName = the C# field name (e.g. "Item_Weapon_Sword_T01_Bone").
+    /// NewName      = PrefabDef.Name if set, otherwise empty string.
     /// </summary>
     static Dictionary<string, PrefabNameEntry> BuildEntries(Type type)
     {
         var entries = new Dictionary<string, PrefabNameEntry>();
 
+        // [CHANGED] Filter for PrefabDef fields instead of PrefabGUID fields.
         var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.FieldType == typeof(PrefabGUID));
+            .Where(f => f.FieldType == typeof(PrefabDef));
 
         foreach (var field in fields)
         {
-            var guid = (PrefabGUID)field.GetValue(null)!;
-            string key = guid.GuidHash.ToString();
+            var def  = (PrefabDef)field.GetValue(null)!;
+            string key = def.Guid.GuidHash.ToString();
 
-            var attr    = field.GetCustomAttribute<PrefabNameAttribute>();
-            string newName = attr?.NewName ?? string.Empty;
+            // [CHANGED] Read Name directly from the PrefabDef struct.
+            //           Previously: field.GetCustomAttribute<PrefabNameAttribute>()?.NewName
+            //           Now:        def.Name — no heap allocation, no attribute scanning.
+            string newName = def.Name ?? string.Empty;
 
-            // Note: duplicate GUID hashes in one registry class will have the
-            // last field win. This is a data issue in the registry, not a bug here.
+            // Note: duplicate GUID hashes in one definition class will have the
+            // last field win. This is a data issue in the definitions, not a bug here.
             entries[key] = new PrefabNameEntry
             {
                 OriginalName = field.Name,
