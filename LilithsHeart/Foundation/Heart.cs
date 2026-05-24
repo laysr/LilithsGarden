@@ -7,8 +7,6 @@ using LilithsHeart.Network;
 using LilithsHeart.Prefabs;
 using LilithsHeart.Modules;
 
-// [CHANGED] Added LilithsHeart.Modules using for HeartRegistry.LogSummary().
-
 namespace LilithsHeart.Foundation;
 
 public static class Heart
@@ -65,20 +63,41 @@ public static class Heart
         // and use it to run their own initialization against ECS.
         OnInitialized?.Invoke();
 
-        // [CHANGED] Log the registry summary after OnInitialized fires so that
-        //           any module that registers itself inside its OnInitialized
-        //           handler is included in the summary output.
+        // Log the registry summary after OnInitialized fires so that any module
+        // that registers itself inside its OnInitialized handler is included.
         HeartRegistry.LogSummary();
 
-        // [CHANGED] Publish OnWorldReady to the event bus after all OnInitialized
-        //           handlers have run. Modules can subscribe to either pattern —
-        //           the C# event (OnInitialized) for direct coupling, or the bus
-        //           (OnWorldReady) for looser pub/sub. Both are supported.
+        // Publish OnWorldReady to the event bus after all OnInitialized handlers
+        // have run. Modules can subscribe to either pattern — the C# event
+        // (OnInitialized) for direct coupling, or the bus (OnWorldReady) for
+        // looser pub/sub. Both are supported.
         //
         // [PERFORMANCE] Publish dispatches synchronously to a snapshot of
         //               subscribers. Keep OnWorldReady handlers fast —
         //               no heavy ECS queries or I/O inside them.
         HeartEventBus.Publish(new OnWorldReady());
+    }
+
+    // [CHANGED] Added OnDestroy() to reset Heart state on world teardown.
+    //           Called from HeartPlugin.Unload() so the next world load can
+    //           fire OnInitialize() again cleanly.
+    //           Publishes OnWorldDestroyed before resetting state so subscribers
+    //           can act on it while Heart is still nominally valid.
+    internal static void OnDestroy()
+    {
+        if (!_initialized) return;
+
+        HeartLogger.Info(LOG_SOURCE, "Heart shutting down...");
+
+        // Publish first — subscribers may need Heart.IsReady to still be true
+        // during their cleanup (e.g. releasing cached entity references).
+        HeartEventBus.Publish(new OnWorldDestroyed());
+
+        _initialized    = false;
+        _serverIdentity = string.Empty;
+        _server         = null;
+
+        HeartLogger.Info(LOG_SOURCE, "Heart shut down.");
     }
 
     internal static void OnLocalizationReloaded()

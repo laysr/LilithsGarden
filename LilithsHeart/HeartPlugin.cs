@@ -17,22 +17,15 @@ public class HeartPlugin : BasePlugin
 
     public override void Load()
     {
-        // [CHANGED] LilithsLogger → HeartLogger throughout.
         HeartLogger.Initialize(base.Log);
 
         try
         {
             HeartLogger.Info("LilithsHeart", $"{MyPluginInfo.PLUGIN_NAME} v{MyPluginInfo.PLUGIN_VERSION} loaded.");
 
-            // Config file named explicitly so admins see LilithsHeart.cfg rather than
-            // the plugin GUID filename BepInEx would generate by default.
-            // [PERFORMANCE] ConfigFile constructor reads from disk once here.
-            //               All subsequent Bind() calls in HeartConfig are in-memory only.
             var configFile = new ConfigFile(HeartPaths.CoreConfig, saveOnInit: true);
 
             HeartConfig.Initialize(configFile);
-
-            // [CHANGED] Updated namespace references: Systems → Events / Registry
             HeartEventBus.Initialize();
             HeartRegistry.Initialize();
 
@@ -51,6 +44,16 @@ public class HeartPlugin : BasePlugin
     public override bool Unload()
     {
         _harmony?.UnpatchSelf();
+
+        // [CHANGED] Call Heart.OnDestroy() before shutting down the bus and registry.
+        //           This publishes OnWorldDestroyed to any remaining subscribers
+        //           and resets Heart's initialized state so a future world load
+        //           can fire OnInitialize() cleanly.
+        //           Order: Heart teardown → bus shutdown → registry shutdown.
+        //           Heart.OnDestroy() publishes to the bus, so the bus must still
+        //           be alive when it runs.
+        Heart.OnDestroy();
+
         HeartEventBus.Shutdown();
         HeartRegistry.Shutdown();
 
