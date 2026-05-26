@@ -7,8 +7,8 @@ public static class SaddleList
         Name    = "VampireHorseSaddle",
         GuidHash = -1209228232,
         Prefab  = "Item_Saddle_Basic",
-        NameKey = null,
-        DescKey = null,
+        NameKey = "35eddf7b-975d-48c4-b86c-bdf20573485f",
+        DescKey = "2003859e-b621-4a0b-b2b8-e0576f2a6f15",
     };
 
     // DLC: Eternal Dominance
@@ -27,8 +27,8 @@ public static class SaddleList
         Name    = "PlagueChemistsSaddle",
         GuidHash = -554782766,
         Prefab  = "Item_Saddle_Gloomrot_DLC",
-        NameKey = null,
-        DescKey = null,
+        NameKey = "215334e1-0dd0-46ff-9955-d1d9e191e143",
+        DescKey = "1859107d-b6bf-494d-8db7-6ac5b4a95978",
     };
 
     // DLC: Legacy of Castlevania
