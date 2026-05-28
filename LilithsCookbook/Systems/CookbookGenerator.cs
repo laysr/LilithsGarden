@@ -4,7 +4,6 @@ using ProjectM;
 using Unity.Entities;
 using LilithsHeart.Config;
 using LilithsHeart.Foundation;
-using LilithsHeart.Prefabs;
 using LilithsCookbook.Config;
 using LilithsCookbook.Data;
 

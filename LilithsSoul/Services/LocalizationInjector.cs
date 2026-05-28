@@ -3,7 +3,7 @@ using Stunlock.Core;
 using Stunlock.Localization;
 using LilithsMind.Prefabs;
 using LilithsSoul.Foundation;
-using LilithsSoul.Network;
+using LilithsMind.Network;
 
 // ============================================================
 //  LocalizationInjector — LilithsSoul

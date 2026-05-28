@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using LilithsHeart.Config;
 using LilithsHeart.Foundation;
+using LilithsMind.Network;
 
 // ============================================================
 //  SyncPayloadCache — LilithsHeart
@@ -14,6 +16,12 @@ using LilithsHeart.Foundation;
 //    2. After all modules have registered overrides — final payload.
 //
 //  SyncSender reads CachedJson on demand when a client connects.
+//
+//  [CHANGED] ServerSyncPayload.Build() inlined into Rebuild().
+//            ServerSyncPayload has moved to LilithsMind which has
+//            no dependency on LilithsHeart.Config. Localization
+//            seeding and identity sanitization now happen here
+//            where LocalizationConfig is accessible.
 //
 //  [PERFORMANCE] Serialization runs at most twice at startup.
 //                No per-frame or per-connect serialization cost.
@@ -45,7 +53,16 @@ public static class SyncPayloadCache
     {
         try
         {
-            var payload = ServerSyncPayload.Build(serverIdentity);
+            // [CHANGED] Inlined from ServerSyncPayload.Build().
+            //           ServerSyncPayload is now a plain DTO in LilithsMind
+            //           with no access to Heart-side config. Localization
+            //           seeding and folder name sanitization live here instead.
+            var payload = new ServerSyncPayload
+            {
+                ServerIdentity       = SanitizeFolderName(serverIdentity),
+                DisplayNameOverrides = new Dictionary<string, string>(LocalizationConfig.DisplayNames),
+                TooltipOverrides     = new Dictionary<string, string>(LocalizationConfig.Tooltips),
+            };
 
             foreach (var (key, value) in recipeOverrides)
                 payload.RecipeOverrides[key] = value;
@@ -76,6 +93,16 @@ public static class SyncPayloadCache
             HeartLogger.Error(LOG_SOURCE, $"Build failed: {ex.Message}");
             _cachedJson = null;
         }
+    }
+
+    // ── Internal ─────────────────────────────────────────────
+
+    // [CHANGED] Moved from ServerSyncPayload.Build() — sanitizes the server
+    //           name for safe use as a filesystem folder name.
+    static string SanitizeFolderName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(name.Select(c => invalid.Contains(c) ? '_' : c)).Trim();
     }
 
     static string ComputeHash(string input)

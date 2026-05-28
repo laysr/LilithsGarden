@@ -41,9 +41,10 @@ using ProjectM;
 using Stunlock.Core;
 using Unity.Collections;
 using Unity.Entities;
-using LilithsMind.Prefabs;
+
 using LilithsSoul.Foundation;
-using LilithsSoul.Network;
+using LilithsMind.Network;
+using LilithsMind.Prefabs;
 
 namespace LilithsSoul.Services;
 

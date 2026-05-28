@@ -4,8 +4,8 @@ using Unity.Entities;
 using LilithsHeart.Config;
 using LilithsHeart.Events;
 using LilithsHeart.Network;
-using LilithsHeart.Prefabs;
 using LilithsHeart.Modules;
+using LilithsMind.Network;
 
 namespace LilithsHeart.Foundation;
 

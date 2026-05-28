@@ -2,8 +2,7 @@ using ProjectM;
 using Stunlock.Core;
 using Unity.Entities;
 using LilithsHeart.Foundation;
-using LilithsHeart.Network;
-using LilithsHeart.Prefabs;
+using LilithsMind.Network;
 using LilithsCookbook.Data;
 
 namespace LilithsCookbook.Systems;
