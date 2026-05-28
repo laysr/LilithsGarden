@@ -1,8 +1,10 @@
 using ProjectM;
+using ProjectM.Tiles;
 using Stunlock.Core;
 using Unity.Entities;
 using LilithsHeart.Foundation;
 using LilithsHeart.Services;
+using LilithsCookbook.Data;
 
 namespace LilithsCookbook.Systems;
 
@@ -20,18 +22,27 @@ namespace LilithsCookbook.Systems;
 //
 //  Two-pass approach:
 //  ──────────────────
-//  Pass 1: Patch prefab entities, then call RegisterRecipes()
-//          and RegisterGameData().
-//  Pass 2: Re-patch WorkstationRecipesBuffer prefab entities
-//          (RegisterGameData resets them), patch live User
-//          entities for player crafting, and patch live placed
-//          station entities via GetAllEntities scan.
+//  Pass 1: Patch all prefab entities (all buffer types).
+//  Registration: RegisterRecipes() + RegisterGameData().
+//  Pass 2: Patch live entities only — User entities for player
+//          crafting, placed station entities for WorkstationRecipesBuffer.
 //
-//  [PERFORMANCE] GetAllEntities scans all ~560K entities once
-//                at startup per WorkstationRecipesBuffer station.
-//                Acceptable cost for a one-time startup operation.
-//                No per-frame cost after startup.
+//  Why two passes?
+//  ───────────────
+//  RegisterGameData() resets WorkstationRecipesBuffer on all live
+//  entities. Pass 1 prefab patches survive this reset. Pass 2 live
+//  entity patches happen after registration so they persist.
+//
+//  Why CreateEntityQuery was insufficient:
+//  ────────────────────────────────────────
+//  Placed WorkstationRecipesBuffer station entities have the Prefab
+//  ECS tag, which causes CreateEntityQuery to exclude them by default.
+//  Pass 2 uses an explicit Prefab + TileModel filter to find them.
+//
+//  [PERFORMANCE] All ECS operations run once at startup only.
+//                No per-frame cost after initialization.
 // ============================================================
+
 public static class StationSystem
 {
     private const string LOG_SOURCE = "LilithsCookbook.StationSystem";
@@ -54,9 +65,9 @@ public static class StationSystem
         }
 
         // ── Pass 1: Patch all prefab entities ─────────────────────────────────
-        // Patches RefinementstationRecipesBuffer and WorkstationRecipesBuffer prefab
-        // entities. RegisterGameData() will reset WorkstationRecipesBuffer live
-        // entities after this — prefab patches survive.
+        // Patches RefinementstationRecipesBuffer and WorkstationRecipesBuffer
+        // prefab entities. RegisterGameData() resets WorkstationRecipesBuffer on
+        // live entities after this — prefab patches survive unaffected.
 
         foreach (var (stationName, entry) in config.Stations)
         {
@@ -112,10 +123,7 @@ public static class StationSystem
 
         // ── Pass 2: Patch all live entities ───────────────────────────────────
         // Patches live User entities (player crafting menu) and placed station
-        // entities. Refinement stations have no live entity patching needed.
-        //
-        // [PERFORMANCE] GetAllEntities scans ~560K entities once per
-        //               WorkstationRecipesBuffer station — no per-frame cost.
+        // entities. Refinement stations require no live entity patching.
 
         int changed = 0;
 
@@ -159,7 +167,7 @@ public static class StationSystem
     /// Patches WorkstationRecipesBuffer on all live User entities.
     /// Called in Pass 2 after RegisterGameData() so changes persist.
     ///
-    /// [PERFORMANCE] One query at startup — no per-frame cost.
+    /// [PERFORMANCE] One targeted query at startup — no per-frame cost.
     /// </summary>
     static void PatchLiveUserEntities(
         List<string> addRecipes,
@@ -198,18 +206,19 @@ public static class StationSystem
     // ── Live placed station entity patching ───────────────────────────────────
 
     /// <summary>
-    /// Patches WorkstationRecipesBuffer on all placed world instances of a station
-    /// matching the given PrefabGUID.
+    /// Patches WorkstationRecipesBuffer on all placed world instances of a
+    /// station matching the given PrefabGUID.
     ///
-    /// Uses GetAllEntities() because CreateEntityQuery cannot find placed station
-    /// entities — they exist in a different ECS chunk and are not returned by
-    /// component queries. GetAllEntities() is required to locate them by GUID.
+    /// Why Prefab + TileModel filter:
+    /// ───────────────────────────────
+    /// Placed WorkstationRecipesBuffer station entities have the Unity ECS
+    /// Prefab tag, which causes CreateEntityQuery to exclude them by default.
+    /// Adding ComponentType.ReadOnly&lt;Prefab&gt;() opts the query back in to
+    /// entities with that tag. TileModel confirms the entity is a placed
+    /// building rather than an inventory container or other entity type.
     ///
-    /// Called in Pass 2 after RegisterGameData() so placed entities have been
-    /// restored from the world save and are patchable.
-    ///
-    /// [PERFORMANCE] Scans all entities once per WorkstationRecipesBuffer station
-    ///               at startup. Acceptable cost for a one-time startup operation.
+    /// [PERFORMANCE] One targeted query per WorkstationRecipesBuffer station
+    ///               at startup — no per-frame cost.
     /// </summary>
     static void PatchLiveStationEntities(
         PrefabGUID stationGuid,
@@ -218,20 +227,27 @@ public static class StationSystem
         string stationName)
     {
         var em = Heart.EntityManager;
-        var allEntities = em.GetAllEntities(Unity.Collections.Allocator.Temp);
+
+        // Prefab tag is required to include placed station entities which Unity
+        // ECS excludes from queries by default. TileModel confirms building entity.
+        var query = em.CreateEntityQuery(
+            ComponentType.ReadWrite<WorkstationRecipesBuffer>(),
+            ComponentType.ReadOnly<TileModel>(),
+            ComponentType.ReadOnly<Unity.Entities.Prefab>()
+        );
+
+        var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
 
         try
         {
             int patched = 0;
 
-            foreach (var entity in allEntities)
+            foreach (var entity in entities)
             {
                 if (!em.HasComponent<Stunlock.Core.PrefabGUID>(entity)) continue;
 
                 var prefabGuid = em.GetComponentData<Stunlock.Core.PrefabGUID>(entity);
                 if (!prefabGuid.Equals(stationGuid)) continue;
-
-                if (!em.HasBuffer<WorkstationRecipesBuffer>(entity)) continue;
 
                 if (addRecipes.Count > 0)
                     AddWorkstationRecipes(entity, addRecipes, stationName);
@@ -247,7 +263,7 @@ public static class StationSystem
         }
         finally
         {
-            allEntities.Dispose();
+            entities.Dispose();
         }
     }
 
@@ -308,7 +324,6 @@ public static class StationSystem
             }
 
             bool found = false;
-
             for (int i = buffer.Length - 1; i >= 0; i--)
             {
                 if (buffer[i].RecipeGuid.Equals(recipeGuid))
@@ -377,7 +392,6 @@ public static class StationSystem
             }
 
             bool found = false;
-
             for (int i = buffer.Length - 1; i >= 0; i--)
             {
                 if (buffer[i].RecipeGuid.Equals(recipeGuid))
