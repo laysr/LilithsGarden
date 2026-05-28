@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ArmorCloakList
+public static class ArmorCloakIndex
 {
     // ── Main Cloaks ───────────────────────────────────────────────────────────
 

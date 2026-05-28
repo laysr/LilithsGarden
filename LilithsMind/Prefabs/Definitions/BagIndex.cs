@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class BagList
+public static class BagIndex
 {
     public static readonly PrefabDef Item_NewBag_T01 = new()
     {

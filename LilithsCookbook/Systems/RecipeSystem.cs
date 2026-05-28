@@ -21,6 +21,11 @@ namespace LilithsCookbook.Systems;
 //  The crafting system reads CraftDuration and other scalar fields
 //  from the map — not the entity — so both must be kept in sync.
 //
+//  [CHANGED] BuildSoulOverride() now builds Requirements and Outputs
+//            as Dictionary<string, int> (prefab name → amount)
+//            instead of List<LilithRecipeData> with Item/Amount fields.
+//            This matches the simplified LilithRecipeData structure.
+//
 //  [PERFORMANCE] ApplyChanges() runs once at startup. All ECS
 //                writes and map updates are one-time costs.
 // ============================================================
@@ -42,7 +47,7 @@ public static class RecipeSystem
 
         // [PERFORMANCE] Dict pre-sized to config count — avoids
         // rehashing during the apply loop.
-        var soulOverrides = new Dictionary<string, RecipeOverrideData>(config.Recipes.Count);
+        var soulOverrides = new Dictionary<string, LilithRecipeData>(config.Recipes.Count);
 
         foreach (var (recipeName, entry) in config.Recipes)
         {
@@ -110,47 +115,56 @@ public static class RecipeSystem
     // ── Soul override builder ─────────────────────────────────
 
     /// <summary>
-    /// Builds a RecipeOverrideData by reading the current ECS entity state
+    /// Builds a LilithRecipeData by reading the current ECS entity state
     /// after all changes have been applied. Reading from ECS rather than the
     /// config entry ensures the override reflects what was actually committed
     /// (e.g. a requirement item that failed to resolve won't appear).
     ///
+    /// [CHANGED] Requirements and Outputs are now Dictionary<string, int>
+    ///           (prefab name → amount) matching the simplified LilithRecipeData.
+    ///           Previously used List<LilithRecipeData> with Item/Amount fields
+    ///           which no longer exist on the type.
+    ///
     /// [PERFORMANCE] Called once per changed recipe at startup only.
     /// </summary>
-    static RecipeOverrideData BuildSoulOverride(Entity recipeEntity)
+    static LilithRecipeData BuildSoulOverride(Entity recipeEntity)
     {
-        var result = new RecipeOverrideData();
+        var result = new LilithRecipeData();
 
         if (recipeEntity.TryGetComponent<RecipeData>(out var recipeData))
             result.CraftDuration = recipeData.CraftDuration;
 
+        // [CHANGED] Build Requirements as Dictionary<string, int>.
+        //           Key: prefab name resolved via PrefabNameResolver.
+        //           Value: ingredient stack amount.
         if (recipeEntity.TryGetBuffer<RecipeRequirementBuffer>(out var reqBuffer))
         {
-            result.Requirements = new List<RecipeSlotData>(reqBuffer.Length);
+            result.Requirements = new Dictionary<string, int>(reqBuffer.Length);
             for (int i = 0; i < reqBuffer.Length; i++)
             {
                 var req = reqBuffer[i];
                 PrefabNameResolver.TryResolveName(req.Guid, out string itemName);
-                result.Requirements.Add(new RecipeSlotData
-                {
-                    Item   = string.IsNullOrEmpty(itemName) ? req.Guid._Value.ToString() : itemName,
-                    Amount = req.Amount
-                });
+                var key = string.IsNullOrEmpty(itemName)
+                    ? req.Guid._Value.ToString()
+                    : itemName;
+                result.Requirements[key] = req.Amount;
             }
         }
 
+        // [CHANGED] Build Outputs as Dictionary<string, int>.
+        //           Key: prefab name resolved via PrefabNameResolver.
+        //           Value: output stack amount.
         if (recipeEntity.TryGetBuffer<RecipeOutputBuffer>(out var outBuffer))
         {
-            result.Outputs = new List<RecipeSlotData>(outBuffer.Length);
+            result.Outputs = new Dictionary<string, int>(outBuffer.Length);
             for (int i = 0; i < outBuffer.Length; i++)
             {
                 var output = outBuffer[i];
                 PrefabNameResolver.TryResolveName(output.Guid, out string itemName);
-                result.Outputs.Add(new RecipeSlotData
-                {
-                    Item   = string.IsNullOrEmpty(itemName) ? output.Guid._Value.ToString() : itemName,
-                    Amount = output.Amount
-                });
+                var key = string.IsNullOrEmpty(itemName)
+                    ? output.Guid._Value.ToString()
+                    : itemName;
+                result.Outputs[key] = output.Amount;
             }
         }
 
@@ -185,8 +199,6 @@ public static class RecipeSystem
         recipeEntity.Write(data);
 
         // ── Write directly into RecipeHashLookupMap ───────────
-        // The map is a NativeParallelHashMap — readonly means the map
-        // reference can't be reassigned, but its contents are mutable.
         var map = Heart.GameDataSystem.RecipeHashLookupMap;
         if (map.TryGetValue(guid, out var mapEntry))
         {
@@ -219,7 +231,8 @@ public static class RecipeSystem
         {
             if (!PrefabNameResolver.TryResolve(req.Item, out PrefabGUID itemGuid))
             {
-                HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Could not resolve requirement item: '{req.Item}', skipping.");
+                HeartLogger.Warning(LOG_SOURCE,
+                    $"[{recipeName}] Could not resolve requirement item: '{req.Item}', skipping.");
                 continue;
             }
 
@@ -238,7 +251,8 @@ public static class RecipeSystem
         {
             if (!PrefabNameResolver.TryResolve(output.Item, out PrefabGUID itemGuid))
             {
-                HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Could not resolve output item: '{output.Item}', skipping.");
+                HeartLogger.Warning(LOG_SOURCE,
+                    $"[{recipeName}] Could not resolve output item: '{output.Item}', skipping.");
                 continue;
             }
 
@@ -262,7 +276,8 @@ public static class RecipeSystem
 
         if (list == null)
         {
-            HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Flag set to true but list is null, skipping.");
+            HeartLogger.Warning(LOG_SOURCE,
+                $"[{recipeName}] Flag set to true but list is null, skipping.");
             return;
         }
 
@@ -276,21 +291,24 @@ public static class RecipeSystem
             if (recipeEntity.Has<ItemRepairBuffer>())
                 recipeEntity.Remove<ItemRepairBuffer>();
             else
-                HeartLogger.Info(LOG_SOURCE, $"[{recipeName}] ItemRepairBuffer already absent, nothing to remove.");
+                HeartLogger.Info(LOG_SOURCE,
+                    $"[{recipeName}] ItemRepairBuffer already absent, nothing to remove.");
         }
         else if (typeof(T) == typeof(List<RecipeUnitOutput>))
         {
             if (recipeEntity.Has<RecipeOutputUnitBuffer>())
                 recipeEntity.Remove<RecipeOutputUnitBuffer>();
             else
-                HeartLogger.Info(LOG_SOURCE, $"[{recipeName}] RecipeOutputUnitBuffer already absent, nothing to remove.");
+                HeartLogger.Info(LOG_SOURCE,
+                    $"[{recipeName}] RecipeOutputUnitBuffer already absent, nothing to remove.");
         }
         else if (typeof(T) == typeof(List<string>))
         {
             if (recipeEntity.Has<RecipeLinkBuffer>())
                 recipeEntity.Remove<RecipeLinkBuffer>();
             else
-                HeartLogger.Info(LOG_SOURCE, $"[{recipeName}] RecipeLinkBuffer already absent, nothing to remove.");
+                HeartLogger.Info(LOG_SOURCE,
+                    $"[{recipeName}] RecipeLinkBuffer already absent, nothing to remove.");
         }
     }
 
@@ -305,7 +323,8 @@ public static class RecipeSystem
         {
             if (!PrefabNameResolver.TryResolve(cost.Item, out PrefabGUID itemGuid))
             {
-                HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Could not resolve repair cost item: '{cost.Item}', skipping.");
+                HeartLogger.Warning(LOG_SOURCE,
+                    $"[{recipeName}] Could not resolve repair cost item: '{cost.Item}', skipping.");
                 continue;
             }
 
@@ -324,7 +343,8 @@ public static class RecipeSystem
         {
             if (!PrefabNameResolver.TryResolve(unit.Unit, out PrefabGUID unitGuid))
             {
-                HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Could not resolve unit output: '{unit.Unit}', skipping.");
+                HeartLogger.Warning(LOG_SOURCE,
+                    $"[{recipeName}] Could not resolve unit output: '{unit.Unit}', skipping.");
                 continue;
             }
 
@@ -343,7 +363,8 @@ public static class RecipeSystem
         {
             if (!PrefabNameResolver.TryResolve(linkName, out PrefabGUID linkGuid))
             {
-                HeartLogger.Warning(LOG_SOURCE, $"[{recipeName}] Could not resolve recipe link: '{linkName}', skipping.");
+                HeartLogger.Warning(LOG_SOURCE,
+                    $"[{recipeName}] Could not resolve recipe link: '{linkName}', skipping.");
                 continue;
             }
 

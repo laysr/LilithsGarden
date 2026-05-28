@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class RecipesEquipmentList
+public static class RecipesEquipmentIndex
 {
     // ── Boots ─────────────────────────────────────────────────────────────────
 

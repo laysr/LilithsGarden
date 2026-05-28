@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ArmorGlovesList
+public static class ArmorGlovesIndex
 {
     public static readonly PrefabDef Item_Gloves_T01_Bone = new()
     {

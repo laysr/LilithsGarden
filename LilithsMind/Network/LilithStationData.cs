@@ -1,15 +1,19 @@
 // ============================================================
-//  StationRecipeOverrideData — LilithsMind
-//  LilithsMind/Network/StationRecipeOverrideData.cs
+//  LilithStationData — LilithsMind
+//  LilithsMind/Network/LilithStationData.cs
 //
 //  DTO describing which recipes to add or remove from a specific
 //  crafting station's WorkstationRecipesBuffer on the client.
 //
 //  [CHANGED] Migrated from duplicate definitions in:
-//              LilithsHeart/Network/StationRecipeOverrideData.cs
-//              LilithsSoul/Network/StationRecipeOverrideData.cs
+//              LilithsHeart/Network/StationLilithRecipeData.cs
+//              LilithsSoul/Network/StationLilithRecipeData.cs
 //            Both files are now deleted. This is the single
 //            definition shared between Heart and Soul.
+//
+//  [CHANGED] Renamed from LilithsStationData → LilithStationData.
+//            Removes the erroneous 's' to match the suite naming
+//            convention established for Lilith-prefixed types.
 //
 //  Keyed by station prefab name in
 //  ServerSyncPayload.StationRecipeOverrides.
@@ -21,10 +25,10 @@
 namespace LilithsMind.Network;
 
 /// <summary>
-/// Describes the recipe list changes for a single crafting station.
+/// Describes the recipe list configuration for a single crafting station.
 /// Keyed by station prefab name in ServerSyncPayload.StationRecipeOverrides.
 /// </summary>
-public sealed class StationRecipeOverrideData
+public sealed class LilithStationData
 {
     /// <summary>
     /// Recipe prefab names to add to the station's WorkstationRecipesBuffer.

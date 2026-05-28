@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class AccessoryList
+public static class AccessoryIndex
 /////////////////////////////////
 /// ALL FILLED OUT
 /////////////////////////////////

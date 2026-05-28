@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static partial class ItemsBookList
+public static partial class ItemsBookIndex
 {
     // ── Armor Books — Boots ───────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 // ============================================================
-//  StationsList — LilithsMind
-//  LilithsMind/Prefabs/Definitions/StationsList.cs
+//  StationsIndex — LilithsMind
+//  LilithsMind/Prefabs/Definitions/StationsIndex.cs
 //
 //  [CHANGED] Migrated from bare PrefabGUID + [PrefabName] attribute fields
 //            to PrefabDef records. Field names match the prefab string exactly.
@@ -14,7 +14,7 @@
 
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class StationsList
+public static class StationsIndex
 {
     // ── Crafting Stations ─────────────────────────────────────────────────────
 

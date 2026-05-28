@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ItemsUsableList
+public static class ItemsUsableIndex
 {
     // ── Castle Keys ───────────────────────────────────────────────────────────
 

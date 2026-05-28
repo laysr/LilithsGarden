@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class RecipesMiscList
+public static class RecipesMiscIndex
 {
     // ── Castle Upkeep ─────────────────────────────────────────────────────────
 

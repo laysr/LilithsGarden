@@ -46,8 +46,8 @@ public static class SyncPayloadCache
     /// </summary>
     public static void Rebuild(
         string serverIdentity,
-        Dictionary<string, RecipeOverrideData> recipeOverrides,
-        Dictionary<string, StationRecipeOverrideData> stationRecipeOverrides,
+        Dictionary<string, LilithRecipeData> recipeOverrides,
+        Dictionary<string, LilithStationData> stationRecipeOverrides,
         List<string> playerRecipesToAdd,
         List<string> playerRecipesToRemove)
     {

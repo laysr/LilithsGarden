@@ -6,82 +6,48 @@ A modular V Rising mod suite
 
 
 
+Naming Conventions:
 
 
 
 
 
-```
-[LilithsHeart] >
-    [Config] >
-        HeartConfig.cs - Config file for LilithsHeart
-        HeartPaths.cs - Paths for where files should go, all modules get their paths from here
-        LocalizationConfig.cs - Loads Localization files from Config>Localization> *.json files on the server
-    [Events] >
-        HeartEventBus.cs - Inter module communicator, announces Events, Modules subscribe to listen
-        HeartEvents.cs - defines Event Types, when something happens, this listens
-    [Foundation] >
-        EntityExtensions.cs - Extensions to more easily interact with entities in code
-        Heart.cs - Accesses World Data, allows other scripts to run after initialization
-        HeartLogger.cs - Logging tool for console messages, all modules communicate with this
-    [Modules] >
-        HeartRegistry.cs - Tracks what modules are loaded
-        ModuleInfo.cs - Data that holds info on Modules installed, versions, compatibility
-    [Network] >
-        ServerEventPayload.cs
-        ServerSyncPayload.cs - Data bundle that will be sent to the client to communicate with LilithsSoul
-        SyncPayloadCache.cs
-        SyncSender.cs
-    [Patches] >
-        ClientConnectPatch.cs
-        InitializationPatch.cs - Adds in our changes on startup through Harmony Patching
-    [Prefabs] >
-        [Definitions] >
-            Equipment.cs - GUIDs
-            Items.cs - GUIDs
-            PrefabNameAttribute.cs - adds a value to prefabGUIDs that holds their set alias
-            Recipes.cs - GUIDs
-            Stations.cs - GUIDs
-            Unsorted.cs - unsorted GUIDs
-            Weapons.cs - GUIDs
-        PrefabNameEntry.cs - Data holding the OriginalName and NewName for prefabGUIDs allowing for renaming
-        PrefabNameResolver.cs - Reads Names Exported and looks up the GUIDs when theyre used in configs
-        PrefabNameExporter.cs - Reads Names > *.json configs on startup to see what GUID has what configured name
-    HeartPlugin.cs - ENTRY POINT, Does the initial loads of patches, logger, config, eventbus, registry
 
-[LilithsSoul] >
-    [Config] >
-        SoulConfig.cs - Config File
-        SoulPaths.cs - Paths where files should go
-    [Foundation] >
-        EntityExtensions.cs - Extensions to more easily interact with entities in code
-        Soul.cs
-        SoulLogger.cs - Logging tool for console messages
-    [Network] >
+
+
+
+
+
+
+[*Patch] - Harmony patch that injects before or after game code
+[*Patcher] - Modifices ECS component Data
+[*Injector] - Injects values into game systems outside of ECS
+[*Service] - Static class that performs work
+[*Queue] - Holds work items to be done over time at a controlled rate
+[*Builder] - Builds complex objects or data structures into more manageable data
+[*Cache] - Stored built data that only gets rebuilt when values change
+[*Data] - Runtime structure of a container that holds data values
+[*Payload] - Envelope of data for sending over network
+[*Def] - Defines the structure of a single entity
+[*Index] - Static collection of values that may be looked up
+[*Enum] - Named set of constant values
+[*Registry] - Runtime lookup table populated dynamically
+[*Config] - Defines settings and writes config files
+
+[*System]
+
+
+[LilithsMind]
+    LilithsMind.csproj
+    [Network]
+        LilithRecipeData.cs
+        LilithStationData.cs
         ServerEventPayload.cs
         ServerSyncPayload.cs
-        SyncReceiver.cs
-    [Patches] >
-        ClientChatSystemPatch.cs
-        ClientInitPatch.cs
-    [Services] > 
-        LocalizationInjector.cs
-    SoulPlugin.cs
+    [Prefabs]
+        PrefabDef.cs
+        [Definitions]
+            *Index.cs
 
 
 
-
-
-[LilithsCookbook] >
-    [Config] >
-        CookbookConfig.cs - Config File
-    [Data] >
-        CookbookRecipeData.cs - model for how recipe.jsons are built
-        CookbookStationData.cs - model for how station.jsons are built
-    [Systems] >
-        CookbookGenerator.cs - Creates configs, examples or an all recipe dump
-        CookbookLoader.cs - reads all Recipes/Stations > *.json server configs
-        RecipeSystem.cs - applies recipe changes
-        StationSystem.cs - applies station changes
-    CookbookPlugin.cs - ENTRY POINT
-```

@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ItemsMiscList
+public static class ItemsMiscIndex
 {
     // ── Fake Items — UI Only ──────────────────────────────────────────────────
 

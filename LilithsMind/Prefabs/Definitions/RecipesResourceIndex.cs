@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class RecipesResourceList
+public static class RecipesResourceIndex
 {
     // ── Refined Resources ─────────────────────────────────────────────────────
 

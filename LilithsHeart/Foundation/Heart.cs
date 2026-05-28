@@ -64,8 +64,8 @@ public static class Heart
 
     static string _serverIdentity = string.Empty;
 
-    static readonly Dictionary<string, RecipeOverrideData>        _pendingRecipeOverrides        = new();
-    static readonly Dictionary<string, StationRecipeOverrideData> _pendingStationRecipeOverrides = new();
+    static readonly Dictionary<string, LilithRecipeData>        _pendingRecipeOverrides        = new();
+    static readonly Dictionary<string, LilithStationData> _pendingStationRecipeOverrides = new();
     static readonly List<string>                                   _pendingPlayerRecipesToAdd     = new();
     static readonly List<string>                                   _pendingPlayerRecipesToRemove  = new();
 
@@ -150,7 +150,7 @@ public static class Heart
     ///
     /// [PERFORMANCE] Called once at startup per module — O(n) over overrides.
     /// </summary>
-    public static void RegisterRecipeOverrides(Dictionary<string, RecipeOverrideData> overrides)
+    public static void RegisterRecipeOverrides(Dictionary<string, LilithRecipeData> overrides)
     {
         foreach (var (key, value) in overrides)
             _pendingRecipeOverrides[key] = value;
@@ -170,7 +170,7 @@ public static class Heart
     {
         if (!_pendingStationRecipeOverrides.TryGetValue(stationName, out var existing))
         {
-            existing = new StationRecipeOverrideData();
+            existing = new LilithStationData();
             _pendingStationRecipeOverrides[stationName] = existing;
         }
 

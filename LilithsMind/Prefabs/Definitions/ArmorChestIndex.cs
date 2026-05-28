@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ArmorChestList
+public static class ArmorChestIndex
 {
     public static readonly PrefabDef Item_Chest_T01_Bone = new()
     {

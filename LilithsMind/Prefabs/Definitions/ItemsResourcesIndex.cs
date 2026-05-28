@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ItemsResourcesList
+public static class ItemsResourcesIndex
 {
     // ── Blood Essence ─────────────────────────────────────────────────────────
 

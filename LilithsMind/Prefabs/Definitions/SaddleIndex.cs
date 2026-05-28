@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class SaddleList
+public static class SaddleIndex
 {
     public static readonly PrefabDef Item_Saddle_Basic = new()
     {

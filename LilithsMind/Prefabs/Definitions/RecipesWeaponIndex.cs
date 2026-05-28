@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class RecipesWeaponList
+public static class RecipesWeaponIndex
 {
 
     // ── Swords ────────────────────────────────────────────────────────────────

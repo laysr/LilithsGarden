@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class ArmorHeadList
+public static class ArmorHeadIndex
 {
     public static readonly PrefabDef Item_Headgear_ArcMageCrown = new()
     {

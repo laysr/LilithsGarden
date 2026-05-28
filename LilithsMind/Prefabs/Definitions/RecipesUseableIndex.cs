@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static class RecipesUsableList
+public static class RecipesUsableIndex
 {
     // ── Consumables ───────────────────────────────────────────────────────────
 

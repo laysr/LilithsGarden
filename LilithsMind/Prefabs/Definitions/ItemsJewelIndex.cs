@@ -1,6 +1,6 @@
 namespace LilithsMind.Prefabs.Definitions;
 
-public static partial class ItemsJewelList
+public static partial class ItemsJewelIndex
 {
     // ── Blood Jewels ──────────────────────────────────────────────────────────
 

@@ -29,6 +29,11 @@
 //    _PrefabDataLookup       — PrefabGUID → PrefabData (has AssetName)
 //  There is no _PrefabNameToGuidMap — we build our own from AssetName.
 //
+//  [CHANGED] PatchRequirementBuffer and PatchOutputBuffer now iterate
+//            Dictionary<string, int> (prefab name → amount) instead of
+//            List<LilithRecipeData> with Item/Amount fields, matching
+//            the simplified LilithRecipeData structure.
+//
 //  [PERFORMANCE] BuildNameMap() runs once at world ready — O(n) over
 //                all prefabs, same pass LocalizationInjector already
 //                does. Apply() iterates only overridden recipes.
@@ -135,7 +140,8 @@ public static class RecipePatcher
 
         foreach (var type in definitionTypes)
         {
-            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            var fields = type
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(f => f.FieldType == typeof(LilithsMind.Prefabs.PrefabDef));
 
             foreach (var field in fields)
@@ -161,10 +167,6 @@ public static class RecipePatcher
     /// Finds the local player's User entity by querying for entities with
     /// both User and WorkstationRecipesBuffer components where IsConnected is true.
     ///
-    /// [CHANGED] Added to fix player crafting menu not reflecting server-side
-    ///           WorkstationRecipesBuffer changes. The client UI reads from the
-    ///           live player entity buffer — Soul must patch it directly.
-    ///
     /// [PERFORMANCE] One ECS query at connect time — no per-frame cost.
     /// </summary>
     public static void ApplyPlayerRecipes(List<string> toAdd, List<string> toRemove)
@@ -184,8 +186,6 @@ public static class RecipePatcher
 
         var em = world.EntityManager;
 
-        // Find all User entities that have WorkstationRecipesBuffer.
-        // On the client there should only be one — the local player.
         var query = em.CreateEntityQuery(
             ComponentType.ReadWrite<WorkstationRecipesBuffer>(),
             ComponentType.ReadOnly<ProjectM.Network.User>()
@@ -210,7 +210,6 @@ public static class RecipePatcher
 
                 var buffer = em.GetBuffer<WorkstationRecipesBuffer>(userEntity);
 
-                // Add recipes.
                 foreach (var recipeName in toAdd)
                 {
                     if (!_nameToGuid.TryGetValue(recipeName, out PrefabGUID recipeGuid))
@@ -237,7 +236,6 @@ public static class RecipePatcher
                     }
                 }
 
-                // Remove recipes.
                 foreach (var recipeName in toRemove)
                 {
                     if (!_nameToGuid.TryGetValue(recipeName, out PrefabGUID recipeGuid))
@@ -273,18 +271,12 @@ public static class RecipePatcher
 
     /// <summary>
     /// Patches WorkstationRecipesBuffer on client-side prefab entities for
-    /// WorkstationRecipesBuffer crafting stations.
-    ///
-    /// [CHANGED] Rewritten to use PrefabCollectionSystem._PrefabGuidToEntityMap
-    ///           instead of CreateEntityQuery. The client UI reads WorkstationRecipesBuffer
-    ///           from the prefab entity — placed station entities don't appear in
-    ///           queries on the client. This matches how RecipePatcher.Apply() works
-    ///           for recipe ingredient/output display.
+    /// crafting stations.
     ///
     /// [PERFORMANCE] One prefab map lookup per station at connect time.
     ///               No per-frame cost.
     /// </summary>
-    public static void ApplyStationRecipes(Dictionary<string, StationRecipeOverrideData> overrides)
+    public static void ApplyStationRecipes(Dictionary<string, LilithStationData> overrides)
     {
         if (overrides.Count == 0)
         {
@@ -302,14 +294,15 @@ public static class RecipePatcher
         var prefabSystem = world.GetExistingSystemManaged<PrefabCollectionSystem>();
         if (prefabSystem == null)
         {
-            SoulLogger.Error(LOG_SOURCE, "PrefabCollectionSystem not found — cannot patch station recipes.");
+            SoulLogger.Error(LOG_SOURCE,
+                "PrefabCollectionSystem not found — cannot patch station recipes.");
             return;
         }
 
-        var em       = world.EntityManager;
+        var em        = world.EntityManager;
         var prefabMap = prefabSystem._PrefabGuidToEntityMap;
-        int patched  = 0;
-        int failed   = 0;
+        int patched   = 0;
+        int failed    = 0;
 
         foreach (var (stationName, data) in overrides)
         {
@@ -339,7 +332,6 @@ public static class RecipePatcher
 
             var buffer = em.GetBuffer<WorkstationRecipesBuffer>(stationEntity);
 
-            // Add recipes.
             foreach (var recipeName in data.RecipesToAdd)
             {
                 if (!_nameToGuid.TryGetValue(recipeName, out PrefabGUID recipeGuid))
@@ -362,7 +354,6 @@ public static class RecipePatcher
                 }
             }
 
-            // Remove recipes.
             foreach (var recipeName in data.RecipesToRemove)
             {
                 if (!_nameToGuid.TryGetValue(recipeName, out PrefabGUID recipeGuid))
@@ -397,7 +388,7 @@ public static class RecipePatcher
     ///
     /// [PERFORMANCE] Iterates only overridden recipes, not all prefabs.
     /// </summary>
-    public static void Apply(Dictionary<string, RecipeOverrideData> overrides)
+    public static void Apply(Dictionary<string, LilithRecipeData> overrides)
     {
         if (overrides.Count == 0)
         {
@@ -415,13 +406,11 @@ public static class RecipePatcher
         var prefabSystem = world.GetExistingSystemManaged<PrefabCollectionSystem>();
         if (prefabSystem == null)
         {
-            SoulLogger.Error(LOG_SOURCE, "PrefabCollectionSystem not found — cannot patch recipes.");
+            SoulLogger.Error(LOG_SOURCE,
+                "PrefabCollectionSystem not found — cannot patch recipes.");
             return;
         }
 
-        // [CHANGED] Get client GameDataSystem so we can also write into
-        //           RecipeHashLookupMap — the client HUD reads CraftDuration
-        //           from the map, not from the prefab entity component.
         var gameDataSystem = world.GetExistingSystemManaged<GameDataSystem>();
         if (gameDataSystem == null)
             SoulLogger.Warning(LOG_SOURCE,
@@ -429,13 +418,11 @@ public static class RecipePatcher
 
         var prefabMap = prefabSystem._PrefabGuidToEntityMap;
         var em        = world.EntityManager;
-
-        int patched = 0;
-        int failed  = 0;
+        int patched   = 0;
+        int failed    = 0;
 
         foreach (var (recipeName, data) in overrides)
         {
-            // Resolve recipe prefab name → GUID using our built map.
             if (!_nameToGuid.TryGetValue(recipeName, out PrefabGUID recipeGuid))
             {
                 SoulLogger.Warning(LOG_SOURCE,
@@ -476,7 +463,7 @@ public static class RecipePatcher
         Entity recipeEntity,
         PrefabGUID recipeGuid,
         string recipeName,
-        RecipeOverrideData data,
+        LilithRecipeData data,
         GameDataSystem? gameDataSystem)
     {
         // ── RecipeData component on prefab entity ─────────────
@@ -488,10 +475,9 @@ public static class RecipePatcher
         }
 
         // ── RecipeHashLookupMap ───────────────────────────────
-        // [CHANGED] The client HUD reads CraftDuration from the client's
-        //           RecipeHashLookupMap, not from the prefab entity component —
-        //           same issue as on the server side. Write into both so the
-        //           displayed timer matches what the server enforces.
+        // The client HUD reads CraftDuration from RecipeHashLookupMap,
+        // not from the prefab entity component. Write into both so the
+        // displayed timer matches what the server enforces.
         if (gameDataSystem != null)
         {
             var map = gameDataSystem.RecipeHashLookupMap;
@@ -509,11 +495,14 @@ public static class RecipePatcher
         PatchOutputBuffer(em, recipeEntity, recipeName, data.Outputs);
     }
 
+    // [CHANGED] Now iterates Dictionary<string, int> (prefab name → amount)
+    //           instead of List<LilithRecipeData> with Item/Amount fields.
+    //           The key is the prefab name, the value is the stack amount.
     static void PatchRequirementBuffer(
         EntityManager em,
         Entity recipeEntity,
         string recipeName,
-        List<RecipeSlotData> slots)
+        Dictionary<string, int> slots)
     {
         DynamicBuffer<RecipeRequirementBuffer> buffer;
 
@@ -524,24 +513,27 @@ public static class RecipePatcher
 
         buffer.Clear();
 
-        foreach (var slot in slots)
+        foreach (var (itemName, amount) in slots)
         {
-            if (!_nameToGuid.TryGetValue(slot.Item, out PrefabGUID itemGuid))
+            if (!_nameToGuid.TryGetValue(itemName, out PrefabGUID itemGuid))
             {
                 SoulLogger.Warning(LOG_SOURCE,
-                    $"[{recipeName}] Could not resolve requirement item '{slot.Item}' — skipping slot.");
+                    $"[{recipeName}] Could not resolve requirement item '{itemName}' — skipping slot.");
                 continue;
             }
 
-            buffer.Add(new RecipeRequirementBuffer { Guid = itemGuid, Amount = slot.Amount });
+            buffer.Add(new RecipeRequirementBuffer { Guid = itemGuid, Amount = amount });
         }
     }
 
+    // [CHANGED] Now iterates Dictionary<string, int> (prefab name → amount)
+    //           instead of List<LilithRecipeData> with Item/Amount fields.
+    //           The key is the prefab name, the value is the stack amount.
     static void PatchOutputBuffer(
         EntityManager em,
         Entity recipeEntity,
         string recipeName,
-        List<RecipeSlotData> slots)
+        Dictionary<string, int> slots)
     {
         DynamicBuffer<RecipeOutputBuffer> buffer;
 
@@ -552,16 +544,16 @@ public static class RecipePatcher
 
         buffer.Clear();
 
-        foreach (var slot in slots)
+        foreach (var (itemName, amount) in slots)
         {
-            if (!_nameToGuid.TryGetValue(slot.Item, out PrefabGUID itemGuid))
+            if (!_nameToGuid.TryGetValue(itemName, out PrefabGUID itemGuid))
             {
                 SoulLogger.Warning(LOG_SOURCE,
-                    $"[{recipeName}] Could not resolve output item '{slot.Item}' — skipping slot.");
+                    $"[{recipeName}] Could not resolve output item '{itemName}' — skipping slot.");
                 continue;
             }
 
-            buffer.Add(new RecipeOutputBuffer { Guid = itemGuid, Amount = slot.Amount });
+            buffer.Add(new RecipeOutputBuffer { Guid = itemGuid, Amount = amount });
         }
     }
 }

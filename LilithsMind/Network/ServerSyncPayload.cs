@@ -77,14 +77,14 @@ public sealed class ServerSyncPayload
     /// Soul patches RecipeData, RecipeRequirementBuffer, RecipeOutputBuffer
     /// and RecipeHashLookupMap on client prefab entities from this dict.
     /// </summary>
-    public Dictionary<string, RecipeOverrideData> RecipeOverrides { get; set; } = new();
+    public Dictionary<string, LilithRecipeData> RecipeOverrides { get; set; } = new();
 
     /// <summary>
     /// Station recipe overrides keyed by station prefab name.
     /// Soul patches WorkstationRecipesBuffer on matching client-side
     /// station entities so the crafting UI reflects server-side changes.
     /// </summary>
-    public Dictionary<string, StationRecipeOverrideData> StationRecipeOverrides { get; set; } = new();
+    public Dictionary<string, LilithStationData> StationRecipeOverrides { get; set; } = new();
 
     // ── Player crafting overrides ────────────────────────────
 
